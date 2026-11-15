@@ -1,0 +1,939 @@
+#regression analysis
+
+pip install pandas numpy matplotlib seaborn scikit-learn
+# 1. Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.pipeline import make_pipeline
+
+# 2. Load Uber dataset
+df = pd.read_csv("uber.csv")
+
+print("First five records:")
+print(df.head())
+
+print("\nDataset Information:")
+print(df.info())
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# 3. Data preprocessing
+# Remove duplicate records
+df = df.drop_duplicates()
+
+# Remove missing values
+df = df.dropna()
+
+# Convert pickup_datetime into datetime format
+df["pickup_datetime"] = pd.to_datetime(
+    df["pickup_datetime"], errors="coerce", utc=True
+)
+
+df = df.dropna(subset=["pickup_datetime"])
+
+# Remove invalid fare and passenger values
+df = df[
+    (df["fare_amount"] > 0) &
+    (df["passenger_count"] > 0) &
+    (df["passenger_count"] <= 6)
+]
+
+# Validate pickup and drop-off coordinates
+df = df[
+    df["pickup_latitude"].between(-90, 90) &
+    df["dropoff_latitude"].between(-90, 90) &
+    df["pickup_longitude"].between(-180, 180) &
+    df["dropoff_longitude"].between(-180, 180)
+]
+
+# Remove zero coordinates
+df = df[
+    (df["pickup_latitude"] != 0) &
+    (df["pickup_longitude"] != 0) &
+    (df["dropoff_latitude"] != 0) &
+    (df["dropoff_longitude"] != 0)
+]
+
+# 4. Calculate distance using Haversine formula
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371
+
+    lat1 = np.radians(lat1)
+    lon1 = np.radians(lon1)
+    lat2 = np.radians(lat2)
+    lon2 = np.radians(lon2)
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (np.sin(dlat / 2) ** 2 +
+         np.cos(lat1) * np.cos(lat2) *
+         np.sin(dlon / 2) ** 2)
+
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    return R * c
+
+df["distance_km"] = calculate_distance(
+    df["pickup_latitude"],
+    df["pickup_longitude"],
+    df["dropoff_latitude"],
+    df["dropoff_longitude"]
+)
+
+# Remove zero-distance rides
+df = df[df["distance_km"] > 0]
+
+# 5. Identify and remove fare outliers using IQR
+Q1 = df["fare_amount"].quantile(0.25)
+Q3 = df["fare_amount"].quantile(0.75)
+
+IQR = Q3 - Q1
+
+lower_limit = Q1 - 1.5 * IQR
+upper_limit = Q3 + 1.5 * IQR
+
+print("\nLower Limit:", lower_limit)
+print("Upper Limit:", upper_limit)
+
+# Display outliers
+outliers = df[
+    (df["fare_amount"] < lower_limit) |
+    (df["fare_amount"] > upper_limit)
+]
+
+print("Number of Outliers:", len(outliers))
+
+# Remove outliers
+df = df[
+    (df["fare_amount"] >= lower_limit) &
+    (df["fare_amount"] <= upper_limit)
+]
+
+# 6. Extract date and time features
+df["hour"] = df["pickup_datetime"].dt.hour
+df["day"] = df["pickup_datetime"].dt.day
+df["month"] = df["pickup_datetime"].dt.month
+df["year"] = df["pickup_datetime"].dt.year
+df["day_of_week"] = df["pickup_datetime"].dt.dayofweek
+
+# 7. Select input and output variables
+X = df[
+    ["distance_km", "passenger_count",
+     "hour", "day", "month", "year", "day_of_week"]
+]
+
+y = df["fare_amount"]
+
+# 8. Check correlation
+correlation = df[
+    ["fare_amount", "distance_km", "passenger_count",
+     "hour", "day", "month", "year", "day_of_week"]
+].corr()
+
+print("\nCorrelation Matrix:")
+print(correlation)
+
+plt.figure(figsize=(10, 7))
+sns.heatmap(correlation, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("Uber Dataset Correlation Matrix")
+plt.show()
+
+# 9. Split dataset into training and testing data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 10. Implement regression models
+models = {
+    "Linear Regression": make_pipeline(
+        StandardScaler(), LinearRegression()
+    ),
+
+    "Ridge Regression": make_pipeline(
+        StandardScaler(), Ridge(alpha=1.0)
+    ),
+
+    "Lasso Regression": make_pipeline(
+        StandardScaler(), Lasso(alpha=0.01, max_iter=10000)
+    )
+}
+
+# 11. Train and evaluate models
+results = []
+
+for name, model in models.items():
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+
+    results.append([name, r2, rmse, mae])
+
+    print("\n", name)
+    print("R2 Score:", round(r2, 4))
+    print("RMSE:", round(rmse, 4))
+    print("MAE:", round(mae, 4))
+
+# 12. Compare all models
+results_df = pd.DataFrame(
+    results,
+    columns=["Model", "R2 Score", "RMSE", "MAE"]
+)
+
+print("\nModel Comparison:")
+print(results_df)
+
+# 13. Visualize model comparison
+results_df.set_index("Model")[["R2 Score"]].plot(
+    kind="bar", figsize=(8, 5), legend=False
+)
+
+plt.title("Comparison of Regression Models - R2 Score")
+plt.ylabel("R2 Score")
+plt.xticks(rotation=15)
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+# Required libraries install करण्यासाठी ही command वापरतो.
+# pandas, numpy, matplotlib, seaborn आणि scikit-learn install होतात.
+pip install pandas numpy matplotlib seaborn scikit-learn
+
+
+# 1. Import required libraries
+
+# Pandas library import करतो, जी dataset read आणि data manipulation साठी वापरली जाते.
+import pandas as pd
+
+# NumPy library import करतो, जी mathematical calculations आणि numerical operations साठी वापरली जाते.
+import numpy as np
+
+# Matplotlib library import करतो, जी graphs आणि charts तयार करण्यासाठी वापरली जाते.
+import matplotlib.pyplot as plt
+
+# Seaborn library import करतो, जी attractive statistical graphs तयार करण्यासाठी वापरली जाते.
+import seaborn as sns
+
+
+# train_test_split function import करतो, जो dataset training आणि testing मध्ये divide करतो.
+from sklearn.model_selection import train_test_split
+
+# StandardScaler import करतो, जो features ला standard scale मध्ये convert करतो.
+from sklearn.preprocessing import StandardScaler
+
+# Linear, Ridge आणि Lasso Regression algorithms import करतो.
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+
+# Model ची performance check करण्यासाठी evaluation metrics import करतो.
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+# make_pipeline import करतो, जो preprocessing आणि ML model एकत्र जोडतो.
+from sklearn.pipeline import make_pipeline
+
+
+# 2. Load Uber dataset
+
+# uber.csv ही CSV dataset file read करून df variable मध्ये store करतो.
+df = pd.read_csv("uber.csv")
+
+# Dataset मधील first five records display करण्यासाठी message print करतो.
+print("First five records:")
+
+# Dataset मधील पहिल्या 5 rows display करतो.
+print(df.head())
+
+# Dataset ची information display करण्यासाठी message print करतो.
+print("\nDataset Information:")
+
+# Dataset मधील columns, data types आणि non-null values ची माहिती दाखवतो.
+print(df.info())
+
+# Missing values check करण्यासाठी message print करतो.
+print("\nMissing Values:")
+
+# प्रत्येक column मध्ये किती missing values आहेत ते count करतो.
+print(df.isnull().sum())
+
+
+# 3. Data preprocessing
+
+# Duplicate records remove करतो, म्हणजे same records पुन्हा राहणार नाहीत.
+df = df.drop_duplicates()
+
+# Missing values असणाऱ्या rows remove करतो.
+df = df.dropna()
+
+# pickup_datetime column ला proper datetime format मध्ये convert करतो.
+# errors="coerce" मुळे invalid dates NaT मध्ये convert होतात.
+# utc=True मुळे datetime values UTC timezone मध्ये convert होतात.
+df["pickup_datetime"] = pd.to_datetime(
+    df["pickup_datetime"], errors="coerce", utc=True
+)
+
+# pickup_datetime मध्ये invalid किंवा missing dates असणाऱ्या rows remove करतो.
+df = df.dropna(subset=["pickup_datetime"])
+
+# Invalid fare आणि passenger values remove करतो.
+df = df[
+    # Fare amount zero किंवा negative नसावा.
+    (df["fare_amount"] > 0) &
+
+    # Passenger count zero पेक्षा जास्त असावा.
+    (df["passenger_count"] > 0) &
+
+    # Passenger count maximum 6 असावा.
+    (df["passenger_count"] <= 6)
+]
+
+# Pickup आणि drop-off coordinates valid आहेत की नाही ते check करतो.
+df = df[
+    # Pickup latitude -90 ते 90 degree दरम्यान असावा.
+    df["pickup_latitude"].between(-90, 90) &
+
+    # Drop-off latitude -90 ते 90 degree दरम्यान असावा.
+    df["dropoff_latitude"].between(-90, 90) &
+
+    # Pickup longitude -180 ते 180 degree दरम्यान असावा.
+    df["pickup_longitude"].between(-180, 180) &
+
+    # Drop-off longitude -180 ते 180 degree दरम्यान असावा.
+    df["dropoff_longitude"].between(-180, 180)
+]
+
+# Zero coordinates असणाऱ्या rides remove करतो.
+df = df[
+    # Pickup latitude zero नसावा.
+    (df["pickup_latitude"] != 0) &
+
+    # Pickup longitude zero नसावा.
+    (df["pickup_longitude"] != 0) &
+
+    # Drop-off latitude zero नसावा.
+    (df["dropoff_latitude"] != 0) &
+
+    # Drop-off longitude zero नसावा.
+    (df["dropoff_longitude"] != 0)
+]
+
+
+# 4. Calculate distance using Haversine formula
+
+# दोन geographical locations मधील distance calculate करण्यासाठी function define करतो.
+# lat1, lon1 = Pickup location चे latitude आणि longitude.
+# lat2, lon2 = Drop-off location चे latitude आणि longitude.
+def calculate_distance(lat1, lon1, lat2, lon2):
+
+    # पृथ्वीची approximate radius 6371 kilometers घेतो.
+    R = 6371
+
+    # Latitude degrees मधून radians मध्ये convert करतो.
+    lat1 = np.radians(lat1)
+
+    # Pickup longitude radians मध्ये convert करतो.
+    lon1 = np.radians(lon1)
+
+    # Drop-off latitude radians मध्ये convert करतो.
+    lat2 = np.radians(lat2)
+
+    # Drop-off longitude radians मध्ये convert करतो.
+    lon2 = np.radians(lon2)
+
+    # दोन्ही locations मधील latitude difference calculate करतो.
+    dlat = lat2 - lat1
+
+    # दोन्ही locations मधील longitude difference calculate करतो.
+    dlon = lon2 - lon1
+
+    # Haversine formula वापरून intermediate value calculate करतो.
+    a = (np.sin(dlat / 2) ** 2 +
+         np.cos(lat1) * np.cos(lat2) *
+         np.sin(dlon / 2) ** 2)
+
+    # Angular distance calculate करतो.
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    # Final distance kilometers मध्ये return करतो.
+    return R * c
+
+
+# calculate_distance function call करून pickup आणि drop-off मधील distance calculate करतो.
+# Calculated distance नवीन distance_km column मध्ये store करतो.
+df["distance_km"] = calculate_distance(
+    df["pickup_latitude"],
+    df["pickup_longitude"],
+    df["dropoff_latitude"],
+    df["dropoff_longitude"]
+)
+
+# Distance zero किंवा negative असणाऱ्या rides remove करतो.
+df = df[df["distance_km"] > 0]
+
+
+# 5. Identify and remove fare outliers using IQR
+
+# Fare amount चा first quartile म्हणजे 25th percentile calculate करतो.
+Q1 = df["fare_amount"].quantile(0.25)
+
+# Fare amount चा third quartile म्हणजे 75th percentile calculate करतो.
+Q3 = df["fare_amount"].quantile(0.75)
+
+# IQR म्हणजे Interquartile Range calculate करतो.
+# IQR = Q3 - Q1.
+IQR = Q3 - Q1
+
+# Outliers ची lower limit calculate करतो.
+lower_limit = Q1 - 1.5 * IQR
+
+# Outliers ची upper limit calculate करतो.
+upper_limit = Q3 + 1.5 * IQR
+
+# Lower limit display करतो.
+print("\nLower Limit:", lower_limit)
+
+# Upper limit display करतो.
+print("Upper Limit:", upper_limit)
+
+# Dataset मधील outliers identify करतो.
+outliers = df[
+    # Lower limit पेक्षा कमी fare असणाऱ्या rows select करतो.
+    (df["fare_amount"] < lower_limit) |
+
+    # Upper limit पेक्षा जास्त fare असणाऱ्या rows select करतो.
+    (df["fare_amount"] > upper_limit)
+]
+
+# Dataset मध्ये किती outliers आहेत ते display करतो.
+print("Number of Outliers:", len(outliers))
+
+# Outliers remove करून clean dataset तयार करतो.
+df = df[
+    # Lower limit पेक्षा जास्त किंवा equal fare असणाऱ्या rows ठेवतो.
+    (df["fare_amount"] >= lower_limit) &
+
+    # Upper limit पेक्षा कमी किंवा equal fare असणाऱ्या rows ठेवतो.
+    (df["fare_amount"] <= upper_limit)
+]
+
+
+# 6. Extract date and time features
+
+# Pickup time मधून hour म्हणजे तास extract करतो.
+df["hour"] = df["pickup_datetime"].dt.hour
+
+# Pickup date मधून day म्हणजे दिवस extract करतो.
+df["day"] = df["pickup_datetime"].dt.day
+
+# Pickup date मधून month म्हणजे महिना extract करतो.
+df["month"] = df["pickup_datetime"].dt.month
+
+# Pickup date मधून year म्हणजे वर्ष extract करतो.
+df["year"] = df["pickup_datetime"].dt.year
+
+# Week मधील day number extract करतो.
+# Monday = 0 आणि Sunday = 6 असतो.
+df["day_of_week"] = df["pickup_datetime"].dt.dayofweek
+
+
+# 7. Select input and output variables
+
+# Machine Learning model साठी input features X मध्ये select करतो.
+X = df[
+    # Ride चे distance kilometers मध्ये.
+    ["distance_km", "passenger_count",
+
+     # Pickup time मधील hour.
+     "hour",
+
+     # Pickup date मधील day.
+     "day",
+
+     # Pickup date मधील month.
+     "month",
+
+     # Pickup date मधील year.
+     "year",
+
+     # Week मधील day number.
+     "day_of_week"]
+]
+
+# fare_amount हा output/target variable y मध्ये store करतो.
+y = df["fare_amount"]
+
+
+# 8. Check correlation
+
+# Selected numerical columns मधील correlation calculate करतो.
+correlation = df[
+    ["fare_amount", "distance_km", "passenger_count",
+     "hour", "day", "month", "year", "day_of_week"]
+].corr()
+
+# Correlation matrix display करण्यासाठी message print करतो.
+print("\nCorrelation Matrix:")
+
+# सर्व selected columns मधील correlation values display करतो.
+print(correlation)
+
+# Graph चा size 10 x 7 inches set करतो.
+plt.figure(figsize=(10, 7))
+
+# Correlation matrix चा heatmap तयार करतो.
+# annot=True मुळे प्रत्येक cell मध्ये numerical value दिसते.
+# cmap="coolwarm" मुळे colours वापरले जातात.
+# fmt=".2f" मुळे values दोन decimal places मध्ये दिसतात.
+sns.heatmap(correlation, annot=True, cmap="coolwarm", fmt=".2f")
+
+# Heatmap ला title देतो.
+plt.title("Uber Dataset Correlation Matrix")
+
+# Heatmap screen वर display करतो.
+plt.show()
+
+
+# 9. Split dataset into training and testing data
+
+# Dataset ला training आणि testing parts मध्ये divide करतो.
+X_train, X_test, y_train, y_test = train_test_split(
+
+    # Input features देतो.
+    X, y,
+
+    # 20% data testing साठी ठेवतो.
+    test_size=0.2,
+
+    # प्रत्येक वेळी same random split मिळण्यासाठी random_state वापरतो.
+    random_state=42
+)
+
+
+# 10. Implement regression models
+
+# तीन regression models dictionary मध्ये store करतो.
+models = {
+
+    # Linear Regression model तयार करतो.
+    # StandardScaler आधी आणि LinearRegression नंतर execute होतो.
+    "Linear Regression": make_pipeline(
+        StandardScaler(), LinearRegression()
+    ),
+
+    # Ridge Regression model तयार करतो.
+    # alpha=1.0 regularization ची strength ठरवतो.
+    "Ridge Regression": make_pipeline(
+        StandardScaler(), Ridge(alpha=1.0)
+    ),
+
+    # Lasso Regression model तयार करतो.
+    # alpha=0.01 regularization strength आहे.
+    # max_iter=10000 म्हणजे maximum 10000 iterations allow करतो.
+    "Lasso Regression": make_pipeline(
+        StandardScaler(), Lasso(alpha=0.01, max_iter=10000)
+    )
+}
+
+
+# 11. Train and evaluate models
+
+# प्रत्येक model चे evaluation results store करण्यासाठी empty list तयार करतो.
+results = []
+
+# Dictionary मधील प्रत्येक model वर loop execute करतो.
+# name मध्ये model चे नाव आणि model मध्ये algorithm store होतो.
+for name, model in models.items():
+
+    # Training data वापरून model train करतो.
+    model.fit(X_train, y_train)
+
+    # Testing data वापरून fare amount predict करतो.
+    y_pred = model.predict(X_test)
+
+    # R2 Score calculate करतो.
+    r2 = r2_score(y_test, y_pred)
+
+    # RMSE म्हणजे Root Mean Squared Error calculate करतो.
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+    # MAE म्हणजे Mean Absolute Error calculate करतो.
+    mae = mean_absolute_error(y_test, y_pred)
+
+    # Model name आणि evaluation metrics results list मध्ये add करतो.
+    results.append([name, r2, rmse, mae])
+
+    # Model चे नाव display करतो.
+    print("\n", name)
+
+    # R2 Score चार decimal places पर्यंत display करतो.
+    print("R2 Score:", round(r2, 4))
+
+    # RMSE चार decimal places पर्यंत display करतो.
+    print("RMSE:", round(rmse, 4))
+
+    # MAE चार decimal places पर्यंत display करतो.
+    print("MAE:", round(mae, 4))
+
+
+# 12. Compare all models
+
+# Results list वापरून नवीन DataFrame तयार करतो.
+results_df = pd.DataFrame(
+
+    # सर्व model चे results देतो.
+    results,
+
+    # DataFrame ला column names देतो.
+    columns=["Model", "R2 Score", "RMSE", "MAE"]
+)
+
+# Model comparison चा message print करतो.
+print("\nModel Comparison:")
+
+# सर्व models चे evaluation results display करतो.
+print(results_df)
+
+
+# 13. Visualize model comparison
+
+# Model column ला index बनवतो.
+# फक्त R2 Score select करून bar graph तयार करतो.
+results_df.set_index("Model")[["R2 Score"]].plot(
+
+    # Bar chart तयार करतो.
+    kind="bar",
+
+    # Graph चा size 8 x 5 inches ठेवतो.
+    figsize=(8, 5),
+
+    # Legend display करत नाही.
+    legend=False
+)
+
+# Graph ला title देतो.
+plt.title("Comparison of Regression Models - R2 Score")
+
+# Y-axis ला label देतो.
+plt.ylabel("R2 Score")
+
+# X-axis वरील model names 15 degrees rotate करतो.
+plt.xticks(rotation=15)
+
+# Graph मधील spacing automatically adjust करतो.
+plt.tight_layout()
+
+# Final comparison graph display करतो.
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Q1. What is the aim of this practical?
+
+Answer in English:
+The aim is to predict Uber ride fare using Linear Regression, Ridge Regression and Lasso Regression and compare their performance.
+
+Answer in Marathi + English Mix:
+या practical चा aim म्हणजे Linear, Ridge आणि Lasso Regression वापरून Uber ride चे fare predict करणे आणि तिन्ही models ची performance compare करणे.
+
+Q2. What is Linear Regression?
+
+Answer in English:
+Linear Regression is a supervised Machine Learning algorithm used to predict continuous numerical values by finding a linear relationship between input and output variables.
+
+Answer in Marathi + English Mix:
+Linear Regression हा supervised Machine Learning algorithm आहे. तो input आणि output variables मधील linear relationship शोधून continuous numerical values predict करतो.
+
+Q3. What is Ridge Regression?
+
+Answer in English:
+Ridge Regression is a type of Linear Regression that uses L2 regularization to reduce overfitting by controlling large coefficient values.
+
+Answer in Marathi + English Mix:
+Ridge Regression हा Linear Regression चा प्रकार आहे. तो L2 regularization वापरून मोठ्या coefficient values control करतो आणि overfitting कमी करण्यास मदत करतो.
+
+Q4. What is Lasso Regression?
+
+Answer in English:
+Lasso Regression is a regression technique that uses L1 regularization. It can reduce some coefficients to zero and perform feature selection.
+
+Answer in Marathi + English Mix:
+Lasso Regression ही regression technique आहे जी L1 regularization वापरते. ती काही features चे coefficients zero करू शकते आणि feature selection करते.
+
+Q5. What is the difference between Linear, Ridge and Lasso Regression?
+
+Answer in English:
+- Linear Regression has no regularization.
+- Ridge Regression uses L2 regularization.
+- Lasso Regression uses L1 regularization.
+Answer in Marathi + English Mix:
+- Linear Regression मध्ये regularization नसते.
+- Ridge Regression मध्ये L2 regularization वापरतात.
+- Lasso Regression मध्ये L1 regularization वापरतात.
+
+Q6. What is Data Preprocessing?
+
+Answer in English:
+Data preprocessing is the process of cleaning and preparing raw data before giving it to a Machine Learning model.
+
+Answer in Marathi + English Mix:
+Data preprocessing म्हणजे raw data clean करून Machine Learning model साठी ready करण्याची process आहे.
+
+Q7. Why do we remove duplicate and missing values?
+
+Answer in English:
+We remove duplicate and missing values to improve data quality and avoid incorrect or unreliable predictions.
+
+Answer in Marathi + English Mix:
+Duplicate आणि missing values remove करतो कारण त्यामुळे data quality improve होते आणि incorrect predictions होण्याची शक्यता कमी होते.
+
+Q8. What is the Haversine Formula?
+
+Answer in English:
+The Haversine formula is used to calculate the geographical distance between two points on the Earth's surface using latitude and longitude.
+
+Answer in Marathi + English Mix:
+Haversine Formula वापरून Earth वरील दोन locations मधील geographical distance calculate करतो. यासाठी latitude आणि longitude वापरतो.
+
+Haversine distance calculation
+\[
+a=\sin^2\left(\frac{\Delta\phi}{2}\right)+\cos\phi_1\cos\phi_2\sin^2\left(\frac{\Delta\lambda}{2}\right)
+\]
+
+\[
+d=2R\tan^{-1}\left(\frac{\sqrt a}{\sqrt{1-a}}\right)
+\]
+
+Here, R = Earth's radius (6371 km), and d = distance in kilometres.
+
+Q9. What is Latitude and Longitude?
+
+Answer in English:
+Latitude measures the north-south position of a location, while longitude measures its east-west position.
+
+Answer in Marathi + English Mix:
+Latitude location ची North-South position सांगतो, तर Longitude location ची East-West position सांगतो.
+
+Q10. What is an Outlier?
+
+Answer in English:
+An outlier is a data value that is very different from other values in the dataset.
+
+Answer in Marathi + English Mix:
+Outlier म्हणजे dataset मधील बाकी values पेक्षा खूप वेगळी असणारी value.
+
+Q11. What is IQR?
+
+Answer in English:
+IQR stands for Interquartile Range. It is the difference between the third quartile and the first quartile.
+
+Answer in Marathi + English Mix:
+IQR म्हणजे Interquartile Range. हे Q3 आणि Q1 यांच्यातील difference आहे. Outliers identify करण्यासाठी याचा वापर होतो.
+
+Q12. What is the use of Quantile() function?
+
+Answer in English:
+The quantile() function calculates the value at a specified percentile in a dataset.
+
+Answer in Marathi + English Mix:
+quantile() function dataset मधील specified percentile ची value calculate करतो. या practical मध्ये 25th आणि 75th percentile शोधतो.
+
+Q13. What is Feature Extraction?
+
+Answer in English:
+Feature extraction is the process of creating useful input features from existing data to improve Machine Learning performance.
+
+Answer in Marathi + English Mix:
+Feature extraction म्हणजे existing data मधून useful features तयार करण्याची process आहे, ज्यामुळे Machine Learning model ला better information मिळते.
+
+Q14. What is Correlation?
+
+Answer in English:
+Correlation measures the relationship between two variables. Its value ranges from -1 to +1.
+
+Answer in Marathi + English Mix:
+Correlation दोन variables मधील relationship measure करतो. याची value -1 ते +1 दरम्यान असते.
+
+Q15. What is a Heatmap?
+
+Answer in English:
+A heatmap is a graphical representation of data using different colours to show numerical values and relationships.
+
+Answer in Marathi + English Mix:
+Heatmap हा data चा graphical representation आहे. यामध्ये different colours वापरून numerical values आणि relationships दाखवतात.
+
+Q16. What is train_test_split()?
+
+Answer in English:
+train_test_split() is used to divide a dataset into training and testing parts.
+
+Answer in Marathi + English Mix:
+train_test_split() function dataset ला training आणि testing parts मध्ये divide करतो. आपल्या practical मध्ये 80% training आणि 20% testing data आहे.
+
+Q17. What is the use of random_state=42?
+
+Answer in English:
+random_state=42 ensures that the dataset is split in the same way every time the code runs.
+
+Answer in Marathi + English Mix:
+random_state=42 मुळे प्रत्येक वेळी code run केल्यावर same random splitting मिळते. त्यामुळे results reproducible राहतात.
+
+Q18. What is StandardScaler and why is it used?
+
+Answer in English:
+StandardScaler transforms features to have a mean of 0 and a standard deviation of 1. It helps regression models work with features on a similar scale.
+
+Answer in Marathi + English Mix:
+StandardScaler प्रत्येक feature ची mean 0 आणि standard deviation 1 करतो. त्यामुळे वेगवेगळ्या scales वरील features समान scale वर येतात.
+
+Q19. What is a Pipeline in Machine Learning?
+
+Answer in English:
+A Pipeline combines multiple Machine Learning steps into a single process, such as data scaling followed by model training.
+
+Answer in Marathi + English Mix:
+Pipeline म्हणजे Machine Learning मधील multiple steps एकत्र जोडणे. आपल्या practical मध्ये आधी StandardScaler आणि नंतर Regression model execute होतो.
+
+Q20. What is the use of alpha in Ridge and Lasso Regression?
+
+Answer in English:
+Alpha controls the strength of regularization. A higher alpha applies stronger regularization to the model.
+
+Answer in Marathi + English Mix:
+Alpha regularization ची strength control करतो. Alpha ची value जास्त असेल तर model वर regularization जास्त apply होते.
+
+B. General Machine Learning Viva Questions (21–30)
+Q21. What is Machine Learning?
+
+Answer in English:
+Machine Learning is a branch of Artificial Intelligence that allows computers to learn from data and make predictions without being explicitly programmed.
+
+Answer in Marathi + English Mix:
+Machine Learning हा Artificial Intelligence चा part आहे. यामध्ये computer data मधून शिकतो आणि explicitly program न करता predictions करतो.
+
+Q22. What are the three main types of Machine Learning?
+
+Answer in English:
+The three main types are Supervised Learning, Unsupervised Learning and Reinforcement Learning.
+
+Answer in Marathi + English Mix:
+Machine Learning चे तीन main types आहेत: Supervised Learning, Unsupervised Learning आणि Reinforcement Learning.
+
+Q23. What is Supervised Learning?
+
+Answer in English:
+Supervised Learning is a type of Machine Learning in which the model learns from labelled data.
+
+Answer in Marathi + English Mix:
+Supervised Learning मध्ये model labelled data वापरून शिकतो. म्हणजे input सोबत correct output सुद्धा दिलेला असतो.
+
+Q24. What is Unsupervised Learning?
+
+Answer in English:
+Unsupervised Learning is a type of Machine Learning in which the model finds patterns from data without labelled outputs.
+
+Answer in Marathi + English Mix:
+Unsupervised Learning मध्ये labelled output दिलेला नसतो. Model स्वतः data मधील patterns शोधतो.
+
+Q25. What is Classification?
+
+Answer in English:
+Classification is a supervised learning technique used to predict categories or class labels.
+
+Answer in Marathi + English Mix:
+Classification ही supervised learning technique आहे. यामध्ये input data कोणत्या category किंवा class मध्ये येतो हे predict करतो.
+
+Q26. What is Regression?
+
+Answer in English:
+Regression is a supervised learning technique used to predict continuous numerical values.
+
+Answer in Marathi + English Mix:
+Regression ही supervised learning technique आहे. यामध्ये house price, salary किंवा Uber fare यांसारख्या continuous numerical values predict करतो.
+
+Q27. What is Overfitting?
+
+Answer in English:
+Overfitting occurs when a model learns the training data too well, including noise, and performs poorly on new data.
+
+Answer in Marathi + English Mix:
+Overfitting तेव्हा होते जेव्हा model training data खूप जास्त शिकतो, noise सुद्धा शिकतो आणि new data वर poor performance देतो.
+
+Q28. What is Underfitting?
+
+Answer in English:
+Underfitting occurs when a model fails to learn important patterns from the training data.
+
+Answer in Marathi + English Mix:
+Underfitting तेव्हा होते जेव्हा model training data मधील important patterns शिकू शकत नाही आणि predictions चुकीचे देतो.
+
+Q29. What is R2 Score?
+
+Answer in English:
+R2 Score measures how well a regression model explains the variation in the target variable. A score closer to 1 generally indicates a better fit.
+
+Answer in Marathi + English Mix:
+R2 Score model target variable मधील variation किती explain करतो ते सांगतो. याची value 1 च्या जवळ असेल तर generally model चांगला perform करतो.
+
+Q30. What are MAE, MSE and RMSE?
+
+Answer in English:
+- MAE (Mean Absolute Error): Average absolute difference between actual and predicted values.
+- MSE (Mean Squared Error): Average of squared prediction errors.
+- RMSE (Root Mean Squared Error): Square root of MSE.
+Answer in Marathi + English Mix:
+- MAE: Actual आणि predicted values मधील absolute errors ची average.
+- MSE: Prediction errors चा square करून त्यांची average काढतो.
+- RMSE: MSE चा square root म्हणजे RMSE.
+
+
+'''
