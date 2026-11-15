@@ -1,0 +1,439 @@
+#3.classification anlys
+
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+
+digits = load_digits()
+
+X = digits.data
+y = digits.target
+
+plt.imshow(digits.images[0], cmap='gray')
+plt.title("Digit: " + str(y[0]))
+plt.show()
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+model = SVC(kernel='rbf')
+
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+for i in range(5):
+    plt.imshow(X_test[i].reshape(8, 8), cmap='gray')
+    plt.title("Actual: {}  Predicted: {}".format(
+        y_test[i], y_pred[i]
+    ))
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''
+
+    
+# sklearn.datasets मधून load_digits dataset import करतो.
+# या dataset मध्ये handwritten digits (0 ते 9) चे images असतात.
+from sklearn.datasets import load_digits
+
+# Dataset ला training आणि testing parts मध्ये divide करण्यासाठी function import करतो.
+from sklearn.model_selection import train_test_split
+
+# Support Vector Classifier (SVC) import करतो, जो classification साठी वापरला जातो.
+from sklearn.svm import SVC
+
+# Model ची accuracy आणि classification report calculate करण्यासाठी functions import करतो.
+from sklearn.metrics import accuracy_score, classification_report
+
+# Images display करण्यासाठी Matplotlib library import करतो.
+import matplotlib.pyplot as plt
+
+
+# Digits dataset load करतो आणि digits variable मध्ये store करतो.
+digits = load_digits()
+
+
+# Dataset मधील image data X मध्ये store करतो.
+# प्रत्येक 8x8 image चे 64 pixel values असतात.
+X = digits.data
+
+# Dataset मधील actual digit labels y मध्ये store करतो.
+# Labels 0 ते 9 पर्यंत असतात.
+y = digits.target
+
+
+# Dataset मधील पहिला handwritten digit image display करतो.
+# cmap='gray' मुळे image black and white मध्ये दिसतो.
+plt.imshow(digits.images[0], cmap='gray')
+
+# Image चा actual digit title मध्ये display करतो.
+# str(y[0]) मुळे digit number string मध्ये convert होतो.
+plt.title("Digit: " + str(y[0]))
+
+# Image screen वर display करतो.
+plt.show()
+
+
+# Dataset ला training आणि testing data मध्ये divide करतो.
+X_train, X_test, y_train, y_test = train_test_split(
+
+    # Input features training आणि testing साठी देतो.
+    X,
+
+    # Actual output labels training आणि testing साठी देतो.
+    y,
+
+    # 20% data testing साठी आणि 80% training साठी ठेवतो.
+    test_size=0.2,
+
+    # प्रत्येक वेळी same random split मिळण्यासाठी random_state वापरतो.
+    random_state=42,
+
+    # प्रत्येक digit class चे proportion training आणि testing मध्ये maintain करतो.
+    stratify=y
+)
+
+
+# SVC म्हणजे Support Vector Classifier चे object तयार करतो.
+# kernel='rbf' मुळे Radial Basis Function kernel वापरला जातो.
+model = SVC(kernel='rbf')
+
+
+# Training data वापरून SVM model train करतो.
+model.fit(X_train, y_train)
+
+
+# Testing data वर prediction करून predicted digit labels y_pred मध्ये store करतो.
+y_pred = model.predict(X_test)
+
+
+# Actual आणि predicted values compare करून model ची accuracy calculate करतो.
+accuracy = accuracy_score(y_test, y_pred)
+
+# Model ची accuracy display करतो.
+print("Accuracy:", accuracy)
+
+
+# Classification report display करण्यासाठी heading print करतो.
+print("\nClassification Report:")
+
+# Precision, Recall, F1-score आणि Support calculate करून display करतो.
+print(classification_report(y_test, y_pred))
+
+
+# Testing dataset मधील पहिल्या 5 images साठी loop execute करतो.
+for i in range(5):
+
+    # Testing data मधील image 8x8 format मध्ये reshape करून display करतो.
+    # cmap='gray' मुळे image black and white मध्ये दिसतो.
+    plt.imshow(X_test[i].reshape(8, 8), cmap='gray')
+
+    # Actual digit आणि model ने predict केलेला digit title मध्ये दाखवतो.
+    # format() function वापरून values title मध्ये insert करतो.
+    plt.title("Actual: {}  Predicted: {}".format(
+        y_test[i], y_pred[i]
+    ))
+
+    # प्रत्येक image screen वर display करतो.
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Q1. What is the aim of this practical?
+
+Answer in English:
+The aim is to recognize handwritten digits from 0 to 9 using the Support Vector Machine classification algorithm.
+
+Answer in Marathi + English Mix:
+या practical चा aim म्हणजे Support Vector Machine algorithm वापरून handwritten digits 0 ते 9 recognize करणे.
+
+Q2. What is SVM?
+
+Answer in English:
+SVM stands for Support Vector Machine. It is a supervised Machine Learning algorithm used for classification and regression.
+
+Answer in Marathi + English Mix:
+SVM म्हणजे Support Vector Machine. हा supervised Machine Learning algorithm आहे, जो classification आणि regression साठी वापरला जातो.
+
+Q3. What is SVC?
+
+Answer in English:
+SVC stands for Support Vector Classifier. It is used to classify data into different categories using SVM.
+
+Answer in Marathi + English Mix:
+SVC म्हणजे Support Vector Classifier. याचा वापर data ला वेगवेगळ्या classes मध्ये classify करण्यासाठी होतो.
+
+Q4. What is the Digits dataset?
+
+Answer in English:
+The Digits dataset is a built-in dataset in Scikit-learn. It contains handwritten digit images from 0 to 9.
+
+Answer in Marathi + English Mix:
+Digits dataset हा Scikit-learn मधील built-in dataset आहे. यामध्ये 0 ते 9 पर्यंत handwritten digits चे images असतात.
+
+Q5. What is the size of each image in the Digits dataset?
+
+Answer in English:
+Each image has a size of 8 × 8 pixels, containing a total of 64 pixel values.
+
+Answer in Marathi + English Mix:
+प्रत्येक image चा size 8 × 8 pixels असतो. म्हणजेच प्रत्येक image मध्ये total 64 pixel values असतात.
+
+Q6. How many classes are present in this dataset?
+
+Answer in English:
+There are 10 classes, representing digits from 0 to 9.
+
+Answer in Marathi + English Mix:
+या dataset मध्ये 10 classes आहेत, ज्या 0 ते 9 digits represent करतात.
+
+Q7. What is a Kernel in SVM?
+
+Answer in English:
+A kernel is a function that helps SVM separate data by mapping it into a suitable feature space.
+
+Answer in Marathi + English Mix:
+Kernel हे एक function आहे, जे SVM ला data वेगळ्या feature space मध्ये map करून classes separate करण्यास मदत करते.
+
+Q8. What is RBF Kernel?
+
+Answer in English:
+RBF stands for Radial Basis Function. It is a nonlinear kernel used to classify complex data.
+
+Answer in Marathi + English Mix:
+RBF म्हणजे Radial Basis Function. हा nonlinear kernel आहे, जो complex data classify करण्यासाठी वापरला जातो.
+
+Q9. What is the use of model.fit()?
+
+Answer in English:
+The fit() function trains the Machine Learning model using training data.
+
+Answer in Marathi + English Mix:
+fit() function training data वापरून Machine Learning model train करतो.
+
+Q10. What is the use of model.predict()?
+
+Answer in English:
+The predict() function predicts output labels for new or testing data.
+
+Answer in Marathi + English Mix:
+predict() function new किंवा testing data साठी output labels predict करतो.
+
+Q11. What is train_test_split()?
+
+Answer in English:
+It is a function used to divide the dataset into training and testing data.
+
+Answer in Marathi + English Mix:
+train_test_split() function dataset ला training आणि testing data मध्ये divide करतो.
+
+Q12. What is the use of test_size=0.2?
+
+Answer in English:
+It means 20% of the dataset is used for testing and the remaining 80% is used for training.
+
+Answer in Marathi + English Mix:
+test_size=0.2 म्हणजे 20% dataset testing साठी आणि remaining 80% training साठी वापरला जातो.
+
+Q13. What is the use of random_state=42?
+
+Answer in English:
+It ensures that the dataset is split in the same way every time the program runs.
+
+Answer in Marathi + English Mix:
+random_state=42 मुळे प्रत्येक वेळी program run केल्यावर same dataset splitting मिळते.
+
+Q14. What is stratify=y?
+
+Answer in English:
+Stratify maintains the same class distribution in both training and testing datasets.
+
+Answer in Marathi + English Mix:
+stratify=y मुळे training आणि testing dataset मध्ये प्रत्येक digit class चे proportion maintain राहते.
+
+Q15. What is Accuracy?
+
+Answer in English:
+Accuracy is the ratio of correctly predicted values to the total number of predictions.
+
+Answer in Marathi + English Mix:
+Accuracy म्हणजे model ने केलेल्या correct predictions आणि total predictions यांचे ratio.
+
+Q16. What is Precision?
+
+Answer in English:
+Precision measures how many predicted positive values are actually positive.
+
+Answer in Marathi + English Mix:
+Precision म्हणजे model ने positive predict केलेल्या values पैकी किती values actually positive आहेत हे सांगते.
+
+Q17. What is Recall?
+
+Answer in English:
+Recall measures how many actual positive values are correctly identified by the model.
+
+Answer in Marathi + English Mix:
+Recall म्हणजे actual positive values पैकी model ने किती correctly identify केल्या हे सांगते.
+
+Q18. What is F1-score?
+
+Answer in English:
+F1-score is the harmonic mean of Precision and Recall. It balances both metrics.
+
+Answer in Marathi + English Mix:
+F1-score हा Precision आणि Recall यांचा harmonic mean आहे. तो दोन्ही metrics balance करतो.
+
+Q19. What is classification_report()?
+
+Answer in English:
+classification_report() displays Precision, Recall, F1-score and Support for each class.
+
+Answer in Marathi + English Mix:
+classification_report() प्रत्येक class साठी Precision, Recall, F1-score आणि Support display करतो.
+
+Q20. What is the difference between imshow() and show()?
+
+Answer in English:
+- imshow() displays image data as an image.
+- show() displays the complete plot or image on the screen.
+Answer in Marathi + English Mix:
+- imshow() image data ला image म्हणून display करतो.
+- show() complete graph किंवा image screen वर दाखवतो.
+
+B. General Machine Learning Viva Questions (21–30)
+Q21. What is Machine Learning?
+
+Answer in English:
+Machine Learning is a branch of Artificial Intelligence that allows computers to learn from data and make predictions without being explicitly programmed.
+
+Answer in Marathi + English Mix:
+Machine Learning हा Artificial Intelligence चा part आहे. यामध्ये computer data मधून शिकतो आणि explicitly program न करता predictions करतो.
+
+Q22. What are the three main types of Machine Learning?
+
+Answer in English:
+The three main types are Supervised Learning, Unsupervised Learning and Reinforcement Learning.
+
+Answer in Marathi + English Mix:
+Machine Learning चे तीन main types आहेत: Supervised Learning, Unsupervised Learning आणि Reinforcement Learning.
+
+Q23. What is Supervised Learning?
+
+Answer in English:
+Supervised Learning is a type of Machine Learning where the model learns from labelled data.
+
+Answer in Marathi + English Mix:
+Supervised Learning मध्ये model labelled data वापरून शिकतो. म्हणजे input सोबत correct output दिलेला असतो.
+
+Q24. What is Unsupervised Learning?
+
+Answer in English:
+Unsupervised Learning is a type of Machine Learning where the model finds patterns from data without labelled outputs.
+
+Answer in Marathi + English Mix:
+Unsupervised Learning मध्ये labelled output नसतो. Model स्वतः data मधील patterns शोधतो.
+
+Q25. What is Classification?
+
+Answer in English:
+Classification is a supervised learning technique used to predict categories or class labels.
+
+Answer in Marathi + English Mix:
+Classification ही supervised learning technique आहे. यामध्ये data कोणत्या category किंवा class मध्ये येतो हे predict केले जाते.
+
+Q26. What is Regression?
+
+Answer in English:
+Regression is a supervised learning technique used to predict continuous numerical values.
+
+Answer in Marathi + English Mix:
+Regression ही supervised learning technique आहे. यामध्ये continuous numerical values predict केल्या जातात.
+
+Q27. What is Overfitting?
+
+Answer in English:
+Overfitting occurs when a model learns the training data too well, including noise, and performs poorly on new data.
+
+Answer in Marathi + English Mix:
+Overfitting तेव्हा होते जेव्हा model training data खूप जास्त शिकतो, noise सुद्धा शिकतो आणि new data वर poor performance देतो.
+
+Q28. What is Underfitting?
+
+Answer in English:
+Underfitting occurs when a model fails to learn important patterns from the training data.
+
+Answer in Marathi + English Mix:
+Underfitting तेव्हा होते जेव्हा model training data मधील important patterns शिकू शकत नाही आणि predictions चुकीचे देतो.
+
+Q29. What is the difference between Classification and Regression?
+
+Answer in English:
+- Classification predicts categories or classes.
+- Regression predicts continuous numerical values.
+Answer in Marathi + English Mix:
+- Classification मध्ये categories किंवा classes predict करतात.
+- Regression मध्ये continuous numerical values predict करतात.
+
+Q30. What is the difference between Training Data and Testing Data?
+
+Answer in English:
+- Training Data is used to train the Machine Learning model.
+- Testing Data is used to check the performance of the trained model.
+Answer in Marathi + English Mix:
+- Training Data model train करण्यासाठी वापरला जातो.
+- Testing Data trained model ची performance check करण्यासाठी वापरला जातो.
+
+'''
