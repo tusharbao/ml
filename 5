@@ -1,0 +1,308 @@
+#5.ensemble learning
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sn
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
+
+digits = load_digits()
+
+df = pd.DataFrame(digits.data)
+df['target'] = digits.target
+
+plt.gray()
+for i in range(4):
+    plt.matshow(digits.images[i])
+plt.show()
+
+X = df.drop('target', axis=1)
+y = df['target']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = RandomForestClassifier(n_estimators=20, random_state=42)
+model.fit(X_train, y_train)
+
+y_predicted = model.predict(X_test)
+print("Accuracy:", model.score(X_test, y_test))
+
+cm = confusion_matrix(y_test, y_predicted)
+
+plt.figure(figsize=(10, 7))
+sn.heatmap(cm, annot=True, fmt='d')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+import pandas as pd                    # Data handling आणि DataFrame तयार करण्यासाठी pandas import केले
+import matplotlib.pyplot as plt        # Graphs आणि images display करण्यासाठी matplotlib import केले
+import seaborn as sn                    # Confusion matrix heatmap दाखवण्यासाठी seaborn import केले
+from sklearn.datasets import load_digits  # Built-in handwritten digits dataset load करण्यासाठी
+from sklearn.model_selection import train_test_split  # Dataset training आणि testing मध्ये divide करण्यासाठी
+from sklearn.ensemble import RandomForestClassifier   # Random Forest classification algorithm import केले
+from sklearn.metrics import confusion_matrix          # Confusion matrix calculate करण्यासाठी
+
+digits = load_digits()                  # Built-in handwritten digits dataset load केला
+
+df = pd.DataFrame(digits.data)          # Digit images चा pixel data DataFrame मध्ये convert केला
+df['target'] = digits.target            # प्रत्येक image चा actual digit label target column मध्ये add केला
+
+plt.gray()                              # Images grayscale मध्ये display करण्यासाठी
+for i in range(4):                      # पहिल्या 4 images display करण्यासाठी loop
+    plt.matshow(digits.images[i])       # Dataset मधील image display केली
+plt.show()                              # सर्व images screen वर दाखवल्या
+
+X = df.drop('target', axis=1)           # Input features घेतले; target column remove केला
+y = df['target']                        # Output labels म्हणजे actual digits घेतले
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)                                       # 80% data training आणि 20% testing साठी divide केला
+
+model = RandomForestClassifier(n_estimators=20, random_state=42)  # 20 decision trees असलेला Random Forest model तयार केला
+model.fit(X_train, y_train)             # Training data वापरून model train केला
+
+y_predicted = model.predict(X_test)     # Test data वर predictions केले
+print("Accuracy:", model.score(X_test, y_test))  # Model ची accuracy calculate करून print केली
+
+cm = confusion_matrix(y_test, y_predicted)  # Actual आणि predicted values वापरून confusion matrix तयार केली
+
+plt.figure(figsize=(10, 7))             # Confusion matrix figure चा size set केला
+sn.heatmap(cm, annot=True, fmt='d')     # Heatmap तयार केली; annot=True numbers दाखवते आणि fmt='d' integer format ठेवते
+plt.xlabel('Predicted')                 # X-axis वर predicted labels दाखवले
+plt.ylabel('Actual')                    # Y-axis वर actual labels दाखवले
+plt.title('Confusion Matrix')           # Graph ला title दिले
+plt.show()                              # Confusion matrix display केली
+
+
+
+
+
+
+
+
+
+
+
+
+Q1. What is the aim of this practical?
+
+English: The aim is to recognize handwritten digits from 0 to 9 using the Random Forest Classifier.
+
+Marathi + English: या practical चा aim handwritten digits 0 ते 9 recognize करण्यासाठी Random Forest Classifier वापरणे आहे.
+
+Q2. What is the Random Forest algorithm?
+
+English: Random Forest is a machine learning algorithm that combines multiple decision trees to make a final prediction.
+
+Marathi + English: Random Forest हा machine learning algorithm आहे जो multiple Decision Trees combine करून final prediction देतो.
+
+Q3. What is a Decision Tree?
+
+English: A Decision Tree is a machine learning model that makes decisions using conditions and branches.
+
+Marathi + English: Decision Tree हा model आहे जो conditions आणि branches वापरून decisions घेतो.
+
+Q4. What is an ensemble learning method?
+
+English: Ensemble learning combines multiple models to improve prediction performance.
+
+Marathi + English: Ensemble learning मध्ये multiple models combine करून prediction अधिक चांगले करण्याचा प्रयत्न केला जातो.
+
+Q5. Which dataset is used in this practical?
+
+English: We use the built-in Handwritten Digits dataset from Scikit-learn.
+
+Marathi + English: या practical मध्ये Scikit-learn मधील built-in Handwritten Digits dataset वापरला आहे.
+
+Q6. How many images are present in the Digits dataset?
+
+English: The Digits dataset contains 1,797 handwritten digit images.
+
+Marathi + English: Digits dataset मध्ये एकूण 1,797 handwritten digit images आहेत.
+
+Q7. Which digits can this model recognize?
+
+English: The model can recognize digits from 0 to 9.
+
+Marathi + English: हा model 0 ते 9 पर्यंतचे digits recognize करू शकतो.
+
+Q8. What is the size of each image?
+
+English: Each image has a size of 8 × 8 pixels.
+
+Marathi + English: प्रत्येक image चा size 8 × 8 pixels आहे.
+
+Q9. What is load_digits()?
+
+English: It is a Scikit-learn function used to load the handwritten digits dataset.
+
+Marathi + English: load_digits() हे Scikit-learn function आहे जे handwritten digits dataset load करते.
+
+Q10. Why do we use pandas DataFrame?
+
+English: We use a DataFrame to store and manage dataset values in tabular form.
+
+Marathi + English: Dataset मधील values rows आणि columns च्या स्वरूपात manage करण्यासाठी DataFrame वापरतो.
+
+Q11. What is digits.data?
+
+English: It contains the pixel values of all digit images in a flattened format.
+
+Marathi + English: digits.data मध्ये सर्व digit images चे pixel values एका single row मध्ये flattened स्वरूपात असतात.
+
+Q12. What is digits.target?
+
+English: It contains the actual digit labels from 0 to 9.
+
+Marathi + English: digits.target मध्ये प्रत्येक image चा actual digit label म्हणजे 0 ते 9 असतो.
+
+Q13. What is the meaning of X and y?
+
+English: X contains input features, while y contains output labels.
+
+Marathi + English: X मध्ये input features म्हणजे pixel values असतात आणि y मध्ये output labels म्हणजे actual digits असतात.
+
+Q14. Why do we remove the target column from X?
+
+English: We remove the target column because it is the output label, not an input feature.
+
+Marathi + English: Target column हा output label आहे, input feature नाही. म्हणून तो X मधून remove करतो.
+
+Q15. Why do we use train_test_split()?
+
+English: It divides the dataset into training and testing parts to evaluate the model.
+
+Marathi + English: Model train करण्यासाठी आणि त्याची performance check करण्यासाठी dataset training आणि testing parts मध्ये divide करतो.
+
+Q16. What does test_size=0.2 mean?
+
+English: It means 20% of the dataset is used for testing and 80% for training.
+
+Marathi + English: याचा अर्थ 20% data testing साठी आणि 80% data training साठी वापरला जातो.
+
+Q17. What is the use of random_state=42?
+
+English: It ensures the same random split or result when the code is run again.
+
+Marathi + English: Code पुन्हा run केल्यावर same random split मिळावा म्हणून random_state=42 वापरतो.
+
+Q18. What is n_estimators=20?
+
+English: It means the Random Forest model uses 20 decision trees.
+
+Marathi + English: याचा अर्थ Random Forest model मध्ये 20 Decision Trees वापरले जातात.
+
+Q19. What is the use of model.fit()?
+
+English: It trains the Random Forest model using the training data.
+
+Marathi + English: model.fit() training data वापरून Random Forest model train करते.
+
+Q20. What is a confusion matrix?
+
+English: A confusion matrix is a table used to compare actual and predicted labels and evaluate a classification model.
+
+Marathi + English: Confusion Matrix हा table आहे जो actual आणि predicted labels compare करून classification model ची performance दाखवतो.
+
+General Machine Learning questions (21–30)
+Q21. What is Machine Learning?
+
+English: Machine Learning is a field of AI that allows computers to learn from data and make predictions.
+
+Marathi + English: Machine Learning ही AI ची branch आहे ज्यामध्ये computer data मधून शिकतो आणि predictions करतो.
+
+Q22. What are the three main types of Machine Learning?
+
+English: The three main types are Supervised Learning, Unsupervised Learning, and Reinforcement Learning.
+
+Marathi + English: Machine Learning चे तीन main types आहेत: Supervised, Unsupervised आणि Reinforcement Learning.
+
+Q23. What is Supervised Learning?
+
+English: Supervised Learning trains a model using labelled data.
+
+Marathi + English: Supervised Learning मध्ये labelled data वापरून model train केला जातो.
+
+Q24. What is Unsupervised Learning?
+
+English: Unsupervised Learning finds patterns in data without labelled outputs.
+
+Marathi + English: Unsupervised Learning मध्ये output labels नसतात. Model स्वतः data मधील patterns शोधतो.
+
+Q25. What is Classification?
+
+English: Classification is used to predict categories or classes, such as digits, names, or emails.
+
+Marathi + English: Classification चा उपयोग data कोणत्या category किंवा class मध्ये येतो हे predict करण्यासाठी होतो.
+
+Q26. What is Regression?
+
+English: Regression is used to predict continuous numerical values, such as house prices or temperature.
+
+Marathi + English: Regression चा उपयोग continuous numerical values predict करण्यासाठी होतो, जसे house price किंवा temperature.
+
+Q27. What is the difference between Classification and Regression?
+
+English: Classification predicts categories, while Regression predicts numerical values.
+
+Marathi + English: Classification categories predict करते, तर Regression numerical values predict करते.
+
+Q28. What is Overfitting?
+
+English: Overfitting happens when a model performs well on training data but poorly on new data.
+
+Marathi + English: जेव्हा model training data वर चांगला perform करतो पण new data वर poor perform करतो, त्याला Overfitting म्हणतात.
+
+Q29. What is Underfitting?
+
+English: Underfitting happens when a model cannot learn the important patterns from the training data.
+
+Marathi + English: जेव्हा model training data मधील important patterns शिकू शकत नाही, तेव्हा त्याला Underfitting म्हणतात.
+
+Q30. What is Accuracy?
+
+English: Accuracy is the ratio of correctly predicted values to the total number of predictions.
+
+Marathi + English: Accuracy म्हणजे total predictions पैकी किती predictions बरोबर आहेत याचे प्रमाण.
+\[
+Accuracy = \frac{Correct\ Predictions}{Total\ Predictions}
+\]
+
+
+'''
