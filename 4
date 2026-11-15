@@ -1,0 +1,810 @@
+#4.clustering anlys
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+import seaborn as sns
+
+data = pd.read_csv("C:\\MyJava 343s3\\Downloads\\archive (1)\\Iris.csv")
+data
+data.head()
+data.tail()
+len(data)
+data.shape
+data.columns
+
+for i, col in enumerate(data.columns):
+    print(f'Column number {1+i} is {col}')
+
+data.dtypes
+data.info()
+data.describe()
+data.isnull()
+data.isnull().sum()
+
+data.drop('Id', axis=1, inplace=True)
+data.head()
+data.isna().sum()
+data.head()
+data['Species'].value_counts()
+
+target_data = data.iloc[:, 4]
+target_data.head()
+
+clustering_data = data.iloc[:, [0, 1, 2, 3]]
+clustering_data.head()
+
+fig, ax = plt.subplots(figsize=(15, 7))
+sns.set(font_scale=1.5)
+ax = sns.scatterplot(
+    x=data['SepalLengthCm'],
+    y=data['SepalWidthCm'],
+    s=70,
+    color='#f73434',
+    edgecolor='#f73434',
+    linewidth=0.3
+)
+ax.set_ylabel('Sepal Width (in cm)')
+ax.set_xlabel('Sepal Length (in cm)')
+plt.title('Sepal Length vs Width', fontsize=20)
+plt.show()
+
+wcss = []
+for i in range(1, 11):
+    km = KMeans(n_clusters=i, n_init=10)
+    km.fit(clustering_data)
+    wcss.append(km.inertia_)
+
+np.array(wcss)
+
+fig, ax = plt.subplots(figsize=(15, 7))
+plt.plot(
+    range(1, 11),
+    wcss,
+    linewidth=2,
+    color="red",
+    marker="8"
+)
+plt.axvline(x=3, ls='--')
+plt.ylabel('WCSS')
+plt.xlabel('No. of Clusters (k)')
+plt.title('The Elbow Method', fontsize=20)
+plt.show()
+
+kms = KMeans(
+    n_clusters=3,
+    init='k-means++',
+    random_state=42,
+    n_init=10
+)
+kms.fit(clustering_data)
+
+clusters = clustering_data.copy()
+clusters['Cluster_Prediction'] = kms.fit_predict(clustering_data)
+clusters.head()
+kms.cluster_centers_
+
+fig, ax = plt.subplots(figsize=(15, 7))
+plt.scatter(
+    x=clusters[clusters['Cluster_Prediction'] == 0]['SepalLengthCm'],
+    y=clusters[clusters['Cluster_Prediction'] == 0]['SepalWidthCm'],
+    s=70,
+    edgecolor='teal',
+    linewidth=0.3,
+    c='teal',
+    label='Iris-versicolor'
+)
+plt.scatter(
+    x=clusters[clusters['Cluster_Prediction'] == 1]['SepalLengthCm'],
+    y=clusters[clusters['Cluster_Prediction'] == 1]['SepalWidthCm'],
+    s=70,
+    edgecolor='lime',
+    linewidth=0.3,
+    c='lime',
+    label='Iris-setosa'
+)
+plt.scatter(
+    x=clusters[clusters['Cluster_Prediction'] == 2]['SepalLengthCm'],
+    y=clusters[clusters['Cluster_Prediction'] == 2]['SepalWidthCm'],
+    s=70,
+    edgecolor='magenta',
+    linewidth=0.3,
+    c='magenta',
+    label='Iris-virginica'
+)
+plt.scatter(
+    x=kms.cluster_centers_[:, 0],
+    y=kms.cluster_centers_[:, 1],
+    s=170,
+    c='yellow',
+    label='Centroids',
+    edgecolor='black',
+    linewidth=0.3
+)
+plt.legend(loc='upper right')
+plt.xlim(4, 8)
+plt.ylim(1.8, 4.5)
+ax.set_ylabel('Sepal Width (in cm)')
+ax.set_xlabel('Sepal Length (in cm)')
+plt.title('Clusters', fontsize=20)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+
+# Pandas library import करतो, जी dataset read आणि data manipulation करण्यासाठी वापरली जाते.
+import pandas as pd
+
+# NumPy library import करतो, जी mathematical आणि numerical calculations साठी वापरली जाते.
+import numpy as np
+
+# Matplotlib library import करतो, जी graphs आणि charts तयार करण्यासाठी वापरली जाते.
+import matplotlib.pyplot as plt
+
+# KMeans algorithm import करतो, जो data चे clusters तयार करण्यासाठी वापरला जातो.
+from sklearn.cluster import KMeans
+
+# Seaborn library import करतो, जी attractive statistical graphs तयार करण्यासाठी वापरली जाते.
+import seaborn as sns
+
+
+# Iris.csv dataset read करून data variable मध्ये store करतो.
+data = pd.read_csv("C:\\MyJava 343s3\\Downloads\\archive (1)\\Iris.csv")
+
+# Complete dataset display करतो.
+data
+
+# Dataset मधील first 5 rows display करतो.
+data.head()
+
+# Dataset मधील last 5 rows display करतो.
+data.tail()
+
+# Dataset मधील total number of rows count करतो.
+len(data)
+
+# Dataset मध्ये किती rows आणि columns आहेत ते दाखवतो.
+data.shape
+
+# Dataset मधील सर्व column names display करतो.
+data.columns
+
+
+# Dataset मधील प्रत्येक column चे number आणि name display करण्यासाठी loop वापरतो.
+for i, col in enumerate(data.columns):
+
+    # प्रत्येक column ला त्याचा क्रमांक आणि नाव देऊन print करतो.
+    print(f'Column number {1+i} is {col}')
+
+
+# Dataset मधील प्रत्येक column चा data type check करतो.
+data.dtypes
+
+# Dataset ची complete information जसे columns, data types आणि non-null values दाखवतो.
+data.info()
+
+# Dataset मधील numerical columns चे statistical summary दाखवतो.
+# यामध्ये count, mean, standard deviation, minimum आणि maximum values असतात.
+data.describe()
+
+# Dataset मधील प्रत्येक cell मध्ये null value आहे की नाही ते check करतो.
+data.isnull()
+
+# प्रत्येक column मध्ये किती missing किंवा null values आहेत ते count करतो.
+data.isnull().sum()
+
+
+# Id column dataset मधून remove करतो.
+# axis=1 म्हणजे column remove करायचा आहे.
+# inplace=True मुळे original dataset मध्येच change होतो.
+data.drop('Id', axis=1, inplace=True)
+
+# Id column remove झाल्यानंतर first 5 rows display करतो.
+data.head()
+
+# प्रत्येक column मधील missing values count करतो.
+data.isna().sum()
+
+# Updated dataset मधील first 5 rows पुन्हा display करतो.
+data.head()
+
+# Species column मध्ये प्रत्येक flower species किती वेळा आली आहे ते count करतो.
+data['Species'].value_counts()
+
+
+# Dataset मधील 5th column म्हणजे Species target_data मध्ये store करतो.
+# iloc वापरून column index 4 select करतो.
+target_data = data.iloc[:, 4]
+
+# Species column मधील first 5 values display करतो.
+target_data.head()
+
+
+# Dataset मधील पहिल्या चार columns म्हणजे flower features select करतो.
+# यामध्ये SepalLength, SepalWidth, PetalLength आणि PetalWidth आहेत.
+clustering_data = data.iloc[:, [0, 1, 2, 3]]
+
+# Clustering साठी select केलेले first 5 records display करतो.
+clustering_data.head()
+
+
+# 15 x 7 size ची figure आणि axes तयार करतो.
+fig, ax = plt.subplots(figsize=(15, 7))
+
+# Seaborn graph मधील font size 1.5 set करतो.
+sns.set(font_scale=1.5)
+
+# Sepal Length आणि Sepal Width यांचा scatter plot तयार करतो.
+ax = sns.scatterplot(
+
+    # X-axis वर Sepal Length दाखवतो.
+    x=data['SepalLengthCm'],
+
+    # Y-axis वर Sepal Width दाखवतो.
+    y=data['SepalWidthCm'],
+
+    # प्रत्येक point चा size 70 ठेवतो.
+    s=70,
+
+    # Points साठी red colour वापरतो.
+    color='#f73434',
+
+    # Points च्या border साठी red colour वापरतो.
+    edgecolor='#f73434',
+
+    # Points च्या border ची width 0.3 ठेवतो.
+    linewidth=0.3
+)
+
+# Y-axis ला Sepal Width हे label देतो.
+ax.set_ylabel('Sepal Width (in cm)')
+
+# X-axis ला Sepal Length हे label देतो.
+ax.set_xlabel('Sepal Length (in cm)')
+
+# Graph ला title देतो.
+plt.title('Sepal Length vs Width', fontsize=20)
+
+# Scatter plot screen वर display करतो.
+plt.show()
+
+
+# WCSS values store करण्यासाठी empty list तयार करतो.
+wcss = []
+
+# 1 ते 10 clusters पर्यंत loop execute करतो.
+for i in range(1, 11):
+
+    # i number of clusters असणारा KMeans model तयार करतो.
+    # n_init=10 मुळे algorithm 10 different initializations try करतो.
+    km = KMeans(n_clusters=i, n_init=10)
+
+    # Clustering data वर KMeans algorithm apply करतो.
+    km.fit(clustering_data)
+
+    # प्रत्येक cluster साठी inertia म्हणजे WCSS value list मध्ये add करतो.
+    wcss.append(km.inertia_)
+
+
+# WCSS list ला NumPy array मध्ये convert करतो.
+np.array(wcss)
+
+
+# 15 x 7 size ची figure आणि axes तयार करतो.
+fig, ax = plt.subplots(figsize=(15, 7))
+
+# Elbow graph तयार करतो.
+plt.plot(
+
+    # X-axis वर clusters ची संख्या 1 ते 10 दाखवतो.
+    range(1, 11),
+
+    # Y-axis वर calculated WCSS values दाखवतो.
+    wcss,
+
+    # Graph line ची width 2 ठेवतो.
+    linewidth=2,
+
+    # Graph line साठी red colour वापरतो.
+    color="red",
+
+    # Data points साठी 8-shaped marker वापरतो.
+    marker="8"
+)
+
+# X-axis वर k=3 येथे dashed vertical line draw करतो.
+plt.axvline(x=3, ls='--')
+
+# Y-axis ला WCSS label देतो.
+plt.ylabel('WCSS')
+
+# X-axis ला number of clusters label देतो.
+plt.xlabel('No. of Clusters (k)')
+
+# Graph ला Elbow Method title देतो.
+plt.title('The Elbow Method', fontsize=20)
+
+# Elbow graph screen वर display करतो.
+plt.show()
+
+
+# 3 clusters असणारा final KMeans model तयार करतो.
+kms = KMeans(
+
+    # Dataset चे 3 clusters तयार करतो.
+    n_clusters=3,
+
+    # Initial centroids smart पद्धतीने select करतो.
+    init='k-means++',
+
+    # प्रत्येक वेळी same results मिळण्यासाठी random_state वापरतो.
+    random_state=42,
+
+    # 10 different initializations वापरतो.
+    n_init=10
+)
+
+# Selected clustering data वर KMeans model train करतो.
+kms.fit(clustering_data)
+
+
+# Original clustering data ची copy तयार करतो.
+clusters = clustering_data.copy()
+
+# KMeans algorithm वापरून प्रत्येक data point ला cluster number assign करतो.
+# fit_predict() model fit करून cluster labels predict करतो.
+# हे labels नवीन Cluster_Prediction column मध्ये store करतो.
+clusters['Cluster_Prediction'] = kms.fit_predict(clustering_data)
+
+# Updated dataset मधील first 5 rows display करतो.
+clusters.head()
+
+# प्रत्येक cluster चे centroid coordinates display करतो.
+kms.cluster_centers_
+
+
+# 15 x 7 size ची figure आणि axes तयार करतो.
+fig, ax = plt.subplots(figsize=(15, 7))
+
+# Cluster number 0 मधील flowers चा scatter plot तयार करतो.
+plt.scatter(
+
+    # Cluster 0 मधील flowers चे Sepal Length X-axis वर दाखवतो.
+    x=clusters[clusters['Cluster_Prediction'] == 0]['SepalLengthCm'],
+
+    # Cluster 0 मधील flowers चे Sepal Width Y-axis वर दाखवतो.
+    y=clusters[clusters['Cluster_Prediction'] == 0]['SepalWidthCm'],
+
+    # Points चा size 70 ठेवतो.
+    s=70,
+
+    # Points च्या border साठी teal colour वापरतो.
+    edgecolor='teal',
+
+    # Border width 0.3 ठेवतो.
+    linewidth=0.3,
+
+    # Points साठी teal colour वापरतो.
+    c='teal',
+
+    # Legend मध्ये cluster चे नाव दाखवतो.
+    label='Iris-versicolor'
+)
+
+# Cluster number 1 मधील flowers चा scatter plot तयार करतो.
+plt.scatter(
+
+    # Cluster 1 मधील flowers चे Sepal Length X-axis वर दाखवतो.
+    x=clusters[clusters['Cluster_Prediction'] == 1]['SepalLengthCm'],
+
+    # Cluster 1 मधील flowers चे Sepal Width Y-axis वर दाखवतो.
+    y=clusters[clusters['Cluster_Prediction'] == 1]['SepalWidthCm'],
+
+    # Points चा size 70 ठेवतो.
+    s=70,
+
+    # Points च्या border साठी lime colour वापरतो.
+    edgecolor='lime',
+
+    # Border width 0.3 ठेवतो.
+    linewidth=0.3,
+
+    # Points साठी lime colour वापरतो.
+    c='lime',
+
+    # Legend मध्ये cluster चे नाव दाखवतो.
+    label='Iris-setosa'
+)
+
+# Cluster number 2 मधील flowers चा scatter plot तयार करतो.
+plt.scatter(
+
+    # Cluster 2 मधील flowers चे Sepal Length X-axis वर दाखवतो.
+    x=clusters[clusters['Cluster_Prediction'] == 2]['SepalLengthCm'],
+
+    # Cluster 2 मधील flowers चे Sepal Width Y-axis वर दाखवतो.
+    y=clusters[clusters['Cluster_Prediction'] == 2]['SepalWidthCm'],
+
+    # Points चा size 70 ठेवतो.
+    s=70,
+
+    # Points च्या border साठी magenta colour वापरतो.
+    edgecolor='magenta',
+
+    # Border width 0.3 ठेवतो.
+    linewidth=0.3,
+
+    # Points साठी magenta colour वापरतो.
+    c='magenta',
+
+    # Legend मध्ये cluster चे नाव दाखवतो.
+    label='Iris-virginica'
+)
+
+# तीनही clusters चे centroid points graph वर दाखवतो.
+plt.scatter(
+
+    # सर्व centroids मधील पहिला feature म्हणजे Sepal Length घेतो.
+    x=kms.cluster_centers_[:, 0],
+
+    # सर्व centroids मधील दुसरा feature म्हणजे Sepal Width घेतो.
+    y=kms.cluster_centers_[:, 1],
+
+    # Centroid points चा size 170 ठेवतो.
+    s=170,
+
+    # Centroids साठी yellow colour वापरतो.
+    c='yellow',
+
+    # Legend मध्ये Centroids हे नाव दाखवतो.
+    label='Centroids',
+
+    # Centroids च्या border साठी black colour वापरतो.
+    edgecolor='black',
+
+    # Border width 0.3 ठेवतो.
+    linewidth=0.3
+)
+
+# Graph च्या upper right corner मध्ये legend display करतो.
+plt.legend(loc='upper right')
+
+# X-axis ची range 4 ते 8 set करतो.
+plt.xlim(4, 8)
+
+# Y-axis ची range 1.8 ते 4.5 set करतो.
+plt.ylim(1.8, 4.5)
+
+# Y-axis ला Sepal Width label देतो.
+ax.set_ylabel('Sepal Width (in cm)')
+
+# X-axis ला Sepal Length label देतो.
+ax.set_xlabel('Sepal Length (in cm)')
+
+# Final cluster graph ला title देतो.
+plt.title('Clusters', fontsize=20)
+
+# Final clustering graph screen वर display करतो.
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Q1. What is the aim of this practical?
+
+Answer in English:
+The aim is to group Iris flowers into three clusters using the K-Means Clustering algorithm.
+
+Answer in Marathi + English Mix:
+या practical चा aim म्हणजे K-Means Clustering algorithm वापरून Iris flowers चे तीन groups किंवा clusters तयार करणे.
+
+Q2. What is K-Means Clustering?
+
+Answer in English:
+K-Means is an unsupervised Machine Learning algorithm that divides data into K clusters based on similarity.
+
+Answer in Marathi + English Mix:
+K-Means हा unsupervised Machine Learning algorithm आहे. तो data मधील similarity नुसार data ला K clusters मध्ये divide करतो.
+
+Q3. What is Clustering?
+
+Answer in English:
+Clustering is the process of grouping similar data points together based on their characteristics.
+
+Answer in Marathi + English Mix:
+Clustering म्हणजे similar characteristics असणाऱ्या data points चे groups तयार करण्याची process.
+
+Q4. What is the Iris dataset?
+
+Answer in English:
+The Iris dataset is a popular dataset containing flower measurements of three species: Setosa, Versicolor and Virginica.
+
+Answer in Marathi + English Mix:
+Iris dataset हा popular dataset आहे. यामध्ये Setosa, Versicolor आणि Virginica या तीन flower species ची measurements असतात.
+
+Q5. How many features are present in the Iris dataset?
+
+Answer in English:
+There are four main features: Sepal Length, Sepal Width, Petal Length and Petal Width.
+
+Answer in Marathi + English Mix:
+Iris dataset मध्ये चार main features आहेत: Sepal Length, Sepal Width, Petal Length आणि Petal Width.
+
+Q6. How many clusters are created in this practical?
+
+Answer in English:
+Three clusters are created using K-Means because the number of clusters is set to 3.
+
+Answer in Marathi + English Mix:
+या practical मध्ये K-Means वापरून तीन clusters तयार केले आहेत कारण n_clusters=3 set केले आहे.
+
+Q7. What is the use of KMeans library?
+
+Answer in English:
+KMeans is a Scikit-learn algorithm used to group similar data points into clusters.
+
+Answer in Marathi + English Mix:
+KMeans ही Scikit-learn मधील algorithm आहे. ती similar data points चे clusters तयार करते.
+
+Q8. What is a Centroid?
+
+Answer in English:
+A centroid is the center point of a cluster. It represents the average position of all data points in that cluster.
+
+Answer in Marathi + English Mix:
+Centroid म्हणजे cluster चा center point. तो त्या cluster मधील सर्व data points ची average position represent करतो.
+
+
+
+
+
+
+
+
+medium.com
+
+
+
+Q9. What is the use of n_clusters=3?
+
+Answer in English:
+It specifies that the K-Means algorithm should create three clusters from the dataset.
+
+Answer in Marathi + English Mix:
+n_clusters=3 म्हणजे K-Means algorithm ने dataset चे तीन clusters तयार करायचे आहेत.
+
+Q10. What is the Elbow Method?
+
+Answer in English:
+The Elbow Method is used to find the optimal number of clusters by plotting WCSS against the number of clusters.
+
+Answer in Marathi + English Mix:
+Elbow Method वापरून optimal number of clusters शोधतात. यामध्ये number of clusters आणि WCSS यांचा graph तयार करतात.
+
+
+
+
+
+
+
+
+mbrenndoerfer.com
+
+
+
+Q11. What is WCSS?
+
+Answer in English:
+WCSS stands for Within-Cluster Sum of Squares. It measures the sum of squared distances between data points and their cluster centroids.
+
+Answer in Marathi + English Mix:
+WCSS म्हणजे Within-Cluster Sum of Squares. प्रत्येक data point आणि त्याच्या cluster centroid मधील squared distance ची sum म्हणजे WCSS.
+
+Q12. Why does WCSS decrease when the number of clusters increases?
+
+Answer in English:
+Because more clusters allow data points to be closer to their respective centroids, reducing the total within-cluster distance.
+
+Answer in Marathi + English Mix:
+Clusters ची संख्या वाढली की data points त्यांच्या centroids च्या जवळ येतात. त्यामुळे WCSS कमी होत जातो.
+
+Q13. What is the use of init='k-means++'?
+
+Answer in English:
+K-means++ selects initial centroids intelligently to improve clustering and reduce the chances of poor initialization.
+
+Answer in Marathi + English Mix:
+k-means++ सुरुवातीचे centroids smart पद्धतीने select करतो, ज्यामुळे clustering चांगले होण्यास मदत होते.
+
+Q14. What is the use of random_state=42?
+
+Answer in English:
+It helps produce reproducible results by controlling the random initialization of the algorithm.
+
+Answer in Marathi + English Mix:
+random_state=42 मुळे random initialization control होते आणि प्रत्येक वेळी reproducible results मिळण्यास मदत होते.
+
+Q15. What is n_init=10?
+
+Answer in English:
+It means the K-Means algorithm runs 10 times with different centroid initializations and selects the best result.
+
+Answer in Marathi + English Mix:
+n_init=10 म्हणजे algorithm वेगवेगळ्या initial centroids सोबत 10 वेळा run होतो आणि best clustering result select करतो.
+
+Q16. What is the use of fit() function?
+
+Answer in English:
+The fit() function trains the K-Means model on the given dataset and identifies clusters.
+
+Answer in Marathi + English Mix:
+fit() function दिलेल्या dataset वर K-Means model train करतो आणि clusters identify करतो.
+
+Q17. What is the use of fit_predict()?
+
+Answer in English:
+fit_predict() trains the clustering model and returns the cluster label assigned to each data point.
+
+Answer in Marathi + English Mix:
+fit_predict() model train करतो आणि प्रत्येक data point ला कोणता cluster assign झाला आहे ते labels return करतो.
+
+Q18. What is the use of cluster_centers_?
+
+Answer in English:
+cluster_centers_ returns the coordinates of the centroids of all clusters.
+
+Answer in Marathi + English Mix:
+cluster_centers_ प्रत्येक cluster च्या centroid चे coordinates return करतो.
+
+Q19. Why do we remove the Id column?
+
+Answer in English:
+We remove the Id column because it is only an identification number and does not provide useful information for clustering flower characteristics.
+
+Answer in Marathi + English Mix:
+Id column हा फक्त identification number आहे. तो flower ची characteristics सांगत नाही, म्हणून clustering करण्यापूर्वी remove करतो.
+
+Q20. What is the difference between target_data and clustering_data?
+
+Answer in English:
+target_data contains the actual flower species, while clustering_data contains four numerical flower features used by the K-Means algorithm.
+
+Answer in Marathi + English Mix:
+target_data मध्ये actual flower species असतात, तर clustering_data मध्ये K-Means साठी वापरलेले चार numerical features असतात.
+
+B. General Machine Learning Viva Questions (21–30)
+Q21. What is Machine Learning?
+
+Answer in English:
+Machine Learning is a branch of Artificial Intelligence that allows computers to learn from data and make predictions or decisions without being explicitly programmed.
+
+Answer in Marathi + English Mix:
+Machine Learning हा Artificial Intelligence चा part आहे. यामध्ये computer data मधून शिकतो आणि explicitly program न करता predictions किंवा decisions घेतो.
+
+Q22. What are the three main types of Machine Learning?
+
+Answer in English:
+The three main types are Supervised Learning, Unsupervised Learning and Reinforcement Learning.
+
+Answer in Marathi + English Mix:
+Machine Learning चे तीन main types आहेत: Supervised Learning, Unsupervised Learning आणि Reinforcement Learning.
+
+Q23. What is Supervised Learning?
+
+Answer in English:
+Supervised Learning is a type of Machine Learning where the model learns from labelled data.
+
+Answer in Marathi + English Mix:
+Supervised Learning मध्ये model labelled data वापरून शिकतो. म्हणजे input सोबत correct output दिलेला असतो.
+
+Q24. What is Unsupervised Learning?
+
+Answer in English:
+Unsupervised Learning is a type of Machine Learning where the model finds hidden patterns in data without labelled outputs.
+
+Answer in Marathi + English Mix:
+Unsupervised Learning मध्ये labelled output नसतो. Model स्वतः data मधील hidden patterns शोधतो.
+
+Q25. What is the difference between Supervised and Unsupervised Learning?
+
+Answer in English:
+- Supervised Learning uses labelled data.
+- Unsupervised Learning uses unlabelled data.
+- Supervised Learning predicts outputs.
+- Unsupervised Learning discovers hidden patterns.
+Answer in Marathi + English Mix:
+- Supervised Learning मध्ये labelled data वापरतात.
+- Unsupervised Learning मध्ये unlabelled data वापरतात.
+- Supervised Learning output predict करतो.
+- Unsupervised Learning hidden patterns शोधतो.
+
+Q26. What is Classification?
+
+Answer in English:
+Classification is a supervised learning technique used to predict categories or class labels.
+
+Answer in Marathi + English Mix:
+Classification ही supervised learning technique आहे. यामध्ये data कोणत्या category किंवा class मध्ये येतो हे predict करतात.
+
+Q27. What is Regression?
+
+Answer in English:
+Regression is a supervised learning technique used to predict continuous numerical values.
+
+Answer in Marathi + English Mix:
+Regression ही supervised learning technique आहे. यामध्ये continuous numerical values predict केल्या जातात.
+
+Q28. What is Overfitting?
+
+Answer in English:
+Overfitting occurs when a model learns the training data too well, including noise, and performs poorly on new data.
+
+Answer in Marathi + English Mix:
+Overfitting तेव्हा होते जेव्हा model training data खूप जास्त शिकतो, noise सुद्धा शिकतो आणि new data वर poor performance देतो.
+
+Q29. What is Underfitting?
+
+Answer in English:
+Underfitting occurs when a model fails to learn important patterns from the training data and performs poorly.
+
+Answer in Marathi + English Mix:
+Underfitting तेव्हा होते जेव्हा model training data मधील important patterns शिकू शकत नाही आणि poor performance देतो.
+
+Q30. What is Feature Scaling?
+
+Answer in English:
+Feature Scaling is the process of bringing different features to a similar scale so that no feature dominates because of its larger numerical values.
+
+Answer in Marathi + English Mix:
+Feature Scaling म्हणजे वेगवेगळ्या features च्या values समान scale वर आणण्याची process. त्यामुळे मोठ्या numerical values असणारा feature जास्त dominat
+
+
+'''
