@@ -1,0 +1,515 @@
+#reinforcement learning
+
+
+import numpy as np
+
+
+class TicTacToeEnvironment:
+    def __init__(self):
+        self.state = [0] * 9
+        self.is_terminal = False
+
+    def reset(self):
+        self.state = [0] * 9
+        self.is_terminal = False
+
+    def get_available_moves(self):
+        return [i for i, mark in enumerate(self.state) if mark == 0]
+
+    def make_move(self, move, player_mark):
+        self.state[move] = player_mark
+
+    def check_win(self, player_mark):
+        winning_states = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ]
+        for state_indices in winning_states:
+            if all(self.state[i] == player_mark for i in state_indices):
+                self.is_terminal = True
+                return True
+        return False
+
+    def is_draw(self):
+        return 0 not in self.state
+
+
+class QLearningAgent:
+    def __init__(
+        self,
+        learning_rate=0.9,
+        discount_factor=0.9,
+        exploration_rate=0.3
+    ):
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.exploration_rate = exploration_rate
+        self.q_table = np.zeros((3**9, 9))
+
+    def get_state_index(self, state):
+        state_index = 0
+        for i, mark in enumerate(state):
+            state_index += (3 ** i) * (mark + 1)
+        return state_index
+
+    def choose_action(self, state, available_moves):
+        state_index = self.get_state_index(state)
+        if np.random.random() < self.exploration_rate:
+            return np.random.choice(available_moves)
+        else:
+            return np.argmax(self.q_table[state_index, available_moves])
+
+    def update_q_table(self, state, action, next_state, reward):
+        state_index = self.get_state_index(state)
+        if next_state is not None:
+            next_state_index = self.get_state_index(next_state)
+            max_q_value = np.max(self.q_table[next_state_index])
+        else:
+            max_q_value = 0
+
+        self.q_table[state_index, action] = (
+            (1 - self.learning_rate)
+            * self.q_table[state_index, action]
+            +
+            self.learning_rate
+            * (
+                reward
+                + self.discount_factor * max_q_value
+            )
+        )
+
+
+def evaluate_agents(agent1, agent2, num_episodes=1000):
+    environment = TicTacToeEnvironment()
+    agent1_wins = 0
+    agent2_wins = 0
+    draws = 0
+    for _ in range(num_episodes):
+        environment.reset()
+        current_agent = agent1
+        while not environment.is_terminal:
+            available_moves = environment.get_available_moves()
+            current_state = environment.state.copy()
+            action = current_agent.choose_action(
+                current_state,
+                available_moves
+            )
+            if current_agent == agent1:
+                player_mark = 1
+            else:
+                player_mark = -1
+            environment.make_move(action, player_mark)
+            if environment.check_win(player_mark):
+                current_agent.update_q_table(
+                    current_state,
+                    action,
+                    None,
+                    10
+                )
+                if current_agent == agent1:
+                    agent1_wins += 1
+                else:
+                    agent2_wins += 1
+                break
+            elif environment.is_draw():
+                current_agent.update_q_table(
+                    current_state,
+                    action,
+                    None,
+                    0
+                )
+                draws += 1
+                break
+            next_state = environment.state.copy()
+            current_agent.update_q_table(
+                current_state,
+                action,
+                next_state,
+                -10
+            )
+            if current_agent == agent1:
+                current_agent = agent2
+            else:
+                current_agent = agent1
+    return agent1_wins, agent2_wins, draws
+
+
+agent1 = QLearningAgent()
+agent2 = QLearningAgent()
+
+agent1_wins, agent2_wins, draws = evaluate_agents(agent1, agent2)
+print("Agent 1 wins:", agent1_wins)
+print("Agent 2 wins:", agent2_wins)
+print("Draws:", draws)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+import numpy as np  # Mathematical operations आणि Q-table तयार करण्यासाठी NumPy import केले
+
+
+class TicTacToeEnvironment:  # Tic-Tac-Toe game चे environment तयार करणारा class
+    def __init__(self):  # Object तयार झाल्यावर automatically execute होणारी method
+        self.state = [0] * 9  # 3x3 board तयार केला; 0 म्हणजे empty cell
+        self.is_terminal = False  # Game संपला आहे की नाही हे check करण्यासाठी
+
+    def reset(self):  # Game पुन्हा सुरुवातीपासून सुरू करण्यासाठी method
+        self.state = [0] * 9  # सर्व 9 cells पुन्हा empty केले
+        self.is_terminal = False  # Game संपलेला नाही असे set केले
+
+    def get_available_moves(self):  # कोणत्या positions रिकाम्या आहेत ते शोधण्यासाठी
+        return [i for i, mark in enumerate(self.state) if mark == 0]  # ज्या cells मध्ये 0 आहे त्यांचे index return केले
+
+    def make_move(self, move, player_mark):  # Player ची move board वर टाकण्यासाठी
+        self.state[move] = player_mark  # दिलेल्या position वर player चा mark ठेवला
+
+    def check_win(self, player_mark):  # Player जिंकला आहे का हे check करण्यासाठी
+        winning_states = [  # जिंकण्यासाठी लागणाऱ्या सर्व possible combinations
+            [0, 1, 2],  # पहिली horizontal row
+            [3, 4, 5],  # दुसरी horizontal row
+            [6, 7, 8],  # तिसरी horizontal row
+            [0, 3, 6],  # पहिली vertical column
+            [1, 4, 7],  # दुसरी vertical column
+            [2, 5, 8],  # तिसरी vertical column
+            [0, 4, 8],  # Left-to-right diagonal
+            [2, 4, 6]   # Right-to-left diagonal
+        ]
+        for state_indices in winning_states:  # प्रत्येक winning combination check करण्यासाठी loop
+            if all(self.state[i] == player_mark for i in state_indices):  # तीनही positions वर same player's mark आहे का ते check केले
+                self.is_terminal = True  # Player जिंकल्यामुळे game संपला असे set केले
+                return True  # Player जिंकला असल्यास True return केले
+        return False  # कोणतीही winning combination नसेल तर False return केले
+
+    def is_draw(self):  # Game draw झाला आहे का हे check करण्यासाठी
+        return 0 not in self.state  # Board मध्ये एकही empty cell नसेल तर True return केले
+
+
+class QLearningAgent:  # Q-Learning वापरणारा agent तयार करणारा class
+    def __init__(
+        self,
+        learning_rate=0.9,  # नवीन अनुभवातून किती शिकायचे हे ठरवणारा parameter
+        discount_factor=0.9,  # Future rewards ला किती importance द्यायचे
+        exploration_rate=0.3  # नवीन moves try करण्याची probability
+    ):
+        self.learning_rate = learning_rate  # Learning rate store केला
+        self.discount_factor = discount_factor  # Discount factor store केला
+        self.exploration_rate = exploration_rate  # Exploration rate store केला
+        self.q_table = np.zeros((3**9, 9))  # सर्व possible states आणि 9 actions साठी Q-table तयार केली; सुरुवातीला सर्व values 0
+
+    def get_state_index(self, state):  # Board state ला एक unique numerical index देण्यासाठी
+        state_index = 0  # सुरुवातीला index 0 ठेवला
+        for i, mark in enumerate(state):  # Board मधील प्रत्येक cell आणि त्याचा index check केला
+            state_index += (3 ** i) * (mark + 1)  # प्रत्येक cell चा mark वापरून unique index calculate केला
+        return state_index  # Calculated state index return केला
+
+    def choose_action(self, state, available_moves):  # Agent ने कोणती move करावी हे ठरवण्यासाठी
+        state_index = self.get_state_index(state)  # Current state चा Q-table index मिळवला
+        if np.random.random() < self.exploration_rate:  # Exploration probability satisfy झाली तर
+            return np.random.choice(available_moves)  # Available moves मधून random move निवडली
+        else:  # अन्यथा exploitation करायचे
+            return np.argmax(self.q_table[state_index, available_moves])  # Available moves पैकी highest Q-value असलेली move निवडली
+
+    def update_q_table(self, state, action, next_state, reward):  # नवीन experience नुसार Q-table update करण्यासाठी
+        state_index = self.get_state_index(state)  # Current state चा index मिळवला
+        if next_state is not None:  # पुढील state available असेल तर
+            next_state_index = self.get_state_index(next_state)  # Next state चा index मिळवला
+            max_q_value = np.max(self.q_table[next_state_index])  # Next state मधील maximum Q-value मिळवली
+        else:  # पुढील state नसेल म्हणजे terminal state असेल तर
+            max_q_value = 0  # Future Q-value 0 ठेवली
+
+        self.q_table[state_index, action] = (  # Current state-action ची Q-value update केली
+            (1 - self.learning_rate)  # जुन्या Q-value चा remaining weight
+            * self.q_table[state_index, action]  # जुन्या Q-value ला weight दिले
+            +
+            self.learning_rate  # नवीन experience चा weight
+            * (
+                reward  # मिळालेला immediate reward
+                + self.discount_factor * max_q_value  # Discounted future reward add केला
+            )
+        )
+
+
+def evaluate_agents(agent1, agent2, num_episodes=1000):  # दोन agents किती चांगले खेळतात हे evaluate करण्यासाठी function
+    environment = TicTacToeEnvironment()  # Tic-Tac-Toe environment तयार केले
+    agent1_wins = 0  # Agent 1 च्या wins ची सुरुवातीची count
+    agent2_wins = 0  # Agent 2 च्या wins ची सुरुवातीची count
+    draws = 0  # Draw games ची सुरुवातीची count
+    for _ in range(num_episodes):  # Default 1000 games खेळण्यासाठी loop
+        environment.reset()  # प्रत्येक नवीन game आधी board reset केला
+        current_agent = agent1  # प्रत्येक game Agent 1 पासून सुरू केला
+        while not environment.is_terminal:  # Game संपेपर्यंत moves चालू ठेवण्यासाठी
+            available_moves = environment.get_available_moves()  # रिकाम्या positions मिळवल्या
+            current_state = environment.state.copy()  # Current board state ची copy घेतली
+            action = current_agent.choose_action(  # Current agent कडून move निवडून घेतली
+                current_state,
+                available_moves
+            )
+            if current_agent == agent1:  # जर सध्या Agent 1 ची turn असेल तर
+                player_mark = 1  # Agent 1 साठी mark 1 ठेवला
+            else:  # अन्यथा Agent 2 ची turn असेल तर
+                player_mark = -1  # Agent 2 साठी mark -1 ठेवला
+            environment.make_move(action, player_mark)  # निवडलेली move board वर execute केली
+            if environment.check_win(player_mark):  # Current player जिंकला आहे का ते check केले
+                current_agent.update_q_table(  # Winning move साठी Q-table update केली
+                    current_state,
+                    action,
+                    None,
+                    10  # Win झाल्यावर +10 reward दिला
+                )
+                if current_agent == agent1:  # Winner Agent 1 असेल तर
+                    agent1_wins += 1  # Agent 1 ची win count वाढवली
+                else:  # Winner Agent 2 असेल तर
+                    agent2_wins += 1  # Agent 2 ची win count वाढवली
+                break  # Game संपल्यामुळे loop थांबवला
+            elif environment.is_draw():  # Game draw झाला आहे का ते check केले
+                current_agent.update_q_table(  # Draw साठी Q-table update केली
+                    current_state,
+                    action,
+                    None,
+                    0  # Draw झाल्यावर 0 reward दिला
+                )
+                draws += 1  # Draw count वाढवली
+                break  # Game संपल्यामुळे loop थांबवला
+            next_state = environment.state.copy()  # Move नंतरचा board state copy केला
+            current_agent.update_q_table(  # Current agent ची Q-table update केली
+                current_state,
+                action,
+                next_state,
+                -10  # Non-terminal move नंतर या code मध्ये -10 reward दिला
+            )
+            if current_agent == agent1:  # जर Agent 1 ची turn पूर्ण झाली असेल तर
+                current_agent = agent2  # आता Agent 2 ची turn
+            else:  # अन्यथा
+                current_agent = agent1  # आता Agent 1 ची turn
+    return agent1_wins, agent2_wins, draws  # दोन्ही agents चे wins आणि draws return केले
+
+
+agent1 = QLearningAgent()  # पहिला Q-Learning agent तयार केला
+agent2 = QLearningAgent()  # दुसरा Q-Learning agent तयार केला
+
+agent1_wins, agent2_wins, draws = evaluate_agents(agent1, agent2)  # दोन्ही agents चे 1000 games evaluate केले
+print("Agent 1 wins:", agent1_wins)  # Agent 1 किती games जिंकला ते print केले
+print("Agent 2 wins:", agent2_wins)  # Agent 2 किती games जिंकला ते print केले
+print("Draws:", draws)  # किती games draw झाले ते print केले
+
+
+
+
+
+
+
+
+
+
+
+Q1. What is the aim of this practical?
+
+English: The aim is to implement a Tic-Tac-Toe game using Q-Learning, where two AI agents learn to play against each other.
+
+Marathi + English: या practical चा aim Q-Learning वापरून Tic-Tac-Toe game तयार करणे आहे, ज्यामध्ये दोन AI agents एकमेकांविरुद्ध खेळायला शिकतात.
+
+Q2. What is Q-Learning?
+
+English: Q-Learning is a Reinforcement Learning algorithm that learns the best action by using rewards and penalties.
+
+Marathi + English: Q-Learning हा Reinforcement Learning algorithm आहे. तो rewards आणि penalties वापरून best action शिकतो.
+
+Q3. What is Reinforcement Learning?
+
+English: Reinforcement Learning is a type of Machine Learning in which an agent learns by interacting with an environment and receiving rewards or penalties.
+
+Marathi + English: Reinforcement Learning मध्ये agent environment सोबत interact करतो आणि rewards किंवा penalties मिळवून शिकतो.
+
+Q4. What is an agent?
+
+English: An agent is a program or system that takes actions in an environment to achieve a goal.
+
+Marathi + English: Agent हा program किंवा system आहे जो environment मध्ये actions घेऊन goal achieve करण्याचा प्रयत्न करतो.
+
+Q5. What is an environment in this practical?
+
+English: The Tic-Tac-Toe board and its game rules together form the environment.
+
+Marathi + English: Tic-Tac-Toe board आणि त्याचे game rules मिळून environment तयार होते.
+
+Q6. What is a state?
+
+English: A state represents the current condition or arrangement of the game board.
+
+Marathi + English: State म्हणजे game board ची current condition किंवा arrangement.
+
+Q7. What is an action?
+
+English: An action is a move selected by an agent, such as placing a mark in an empty cell.
+
+Marathi + English: Action म्हणजे agent ने निवडलेली move, जसे empty cell मध्ये mark ठेवणे.
+
+Q8. What is a reward?
+
+English: A reward is feedback given to an agent for its action. It helps the agent learn good actions.
+
+Marathi + English: Reward म्हणजे agent ला action नंतर मिळणारा feedback. यामुळे agent चांगल्या actions शिकतो.
+
+Q9. What is a penalty?
+
+English: A penalty is a negative reward given for an undesirable action or result.
+
+Marathi + English: Penalty म्हणजे चुकीच्या किंवा undesirable action साठी दिलेला negative reward.
+
+Q10. What is a Q-table?
+
+English: A Q-table stores Q-values for different state-action pairs. It helps the agent choose actions.
+
+Marathi + English: Q-table मध्ये वेगवेगळ्या state-action pairs च्या Q-values store होतात. Agent ला action निवडण्यासाठी ती मदत करते.
+
+Q11. What is a Q-value?
+
+English: A Q-value represents the expected future reward for taking a particular action in a particular state.
+
+Marathi + English: एखाद्या specific state मध्ये specific action घेतल्यावर मिळू शकणाऱ्या expected future reward ला Q-value म्हणतात.
+
+Q12. What is the use of learning_rate?
+
+English: Learning rate controls how much new information affects the existing Q-value.
+
+Marathi + English: Learning rate ठरवतो की नवीन experience मुळे जुन्या Q-value मध्ये किती बदल करायचा.
+
+Q13. What is the use of discount_factor?
+
+English: Discount factor determines how much importance is given to future rewards.
+
+Marathi + English: Discount factor future rewards ला किती importance द्यायचे हे ठरवतो.
+
+Q14. What is the exploration rate?
+
+English: Exploration rate controls how often the agent tries random actions instead of choosing the best-known action.
+
+Marathi + English: Exploration rate ठरवतो की agent किती वेळा random action try करेल आणि किती वेळा best-known action निवडेल.
+
+Q15. What is the difference between Exploration and Exploitation?
+
+English: Exploration means trying new actions, while exploitation means choosing the best-known action.
+
+Marathi + English: Exploration म्हणजे नवीन actions try करणे, तर Exploitation म्हणजे आधीपासून माहित असलेली best action निवडणे.
+
+Q16. What is the use of get_available_moves()?
+
+English: It returns the positions of all empty cells where a player can make a move.
+
+Marathi + English: ही method board वरील सर्व empty cells चे positions return करते, जिथे player move करू शकतो.
+
+Q17. What is the use of check_win()?
+
+English: It checks whether a player has completed any winning combination of three marks.
+
+Marathi + English: ही method player ने तीन marks ची winning combination तयार केली आहे का ते check करते.
+
+Q18. What is the use of reset()?
+
+English: It clears the board and resets the game to its initial state.
+
+Marathi + English: reset() board मधील सर्व marks clear करून game पुन्हा सुरुवातीच्या state मध्ये आणते.
+
+Q19. What is an episode in Reinforcement Learning?
+
+English: An episode is one complete game or interaction from the starting state until the terminal state.
+
+Marathi + English: Episode म्हणजे सुरुवातीपासून game संपेपर्यंतचा एक complete game.
+
+Q20. What is the purpose of evaluate_agents()?
+
+English: It makes two agents play multiple games and counts their wins and draws.
+
+Marathi + English: ही function दोन agents कडून multiple games खेळवते आणि त्यांचे wins व draws count करते.
+
+General Machine Learning questions (21–30)
+Q21. What are the main types of Machine Learning?
+
+English: The main types are Supervised Learning, Unsupervised Learning, and Reinforcement Learning.
+
+Marathi + English: Machine Learning चे तीन main types आहेत: Supervised, Unsupervised आणि Reinforcement Learning.
+
+Q22. What is Artificial Intelligence?
+
+English: Artificial Intelligence is a technology that enables machines to perform tasks that normally require human intelligence.
+
+Marathi + English: Artificial Intelligence ही technology machines ला human intelligence लागणारी कामे करण्यास सक्षम बनवते.
+
+Q23. What is the difference between AI and ML?
+
+English: AI is the broader concept of making machines intelligent, while ML is a part of AI that learns from data.
+
+Marathi + English: AI हा machines intelligent बनवण्याचा मोठा concept आहे, तर ML ही AI ची branch आहे जी data मधून शिकते.
+
+Q24. What is a terminal state?
+
+English: A terminal state is the final state where the learning episode or game ends.
+
+Marathi + English: Terminal state म्हणजे अशी final state जिथे game किंवा learning episode संपतो.
+
+Q25. What is a Policy in Reinforcement Learning?
+
+English: A policy is a strategy that tells an agent which action to take in a given state.
+
+Marathi + English: Policy म्हणजे अशी strategy जी specific state मध्ये agent ने कोणती action घ्यावी हे ठरवते.
+
+Q26. What is the Bellman equation?
+
+English: The Bellman equation calculates the value of a state or action using the immediate reward and expected future value.
+
+Marathi + English: Bellman equation immediate reward आणि future value वापरून state किंवा action ची value calculate करते.
+
+Q27. What is the Q-Learning update formula?
+
+English: The Q-Learning update formula is:
+\[
+Q(s,a)\leftarrow Q(s,a)+\alpha[r+\gamma\max Q(s',a')-Q(s,a)]
+\]
+
+Here, α is learning rate, γ is discount factor, and r is reward.
+
+Marathi + English: या formula मध्ये जुन्या Q-value ला नवीन reward आणि future Q-value नुसार update केले जाते. α म्हणजे learning rate आणि γ म्हणजे discount factor.
+
+Q28. What is NumPy?
+
+English: NumPy is a Python library used for numerical calculations and array operations.
+
+Marathi + English: NumPy ही Python library आहे जी numerical calculations आणि array operations साठी वापरली जाते.
+
+Q29. What is an episode in this code?
+
+English: In this code, one episode represents one complete Tic-Tac-Toe game. The agents play 1000 episodes by default.
+
+Marathi + English: या code मध्ये एक episode म्हणजे एक complete Tic-Tac-Toe game. Default ने agents 1000 games खेळतात.
+
+Q30. What is the difference between Q-Learning and Supervised Learning?
+
+English: Q-Learning learns through rewards and penalties, while Supervised Learning learns from labelled training data.
+
+Marathi + English: Q-Learning rewards आणि penalties वापरून शिकते, तर Supervised Learning labelled training data वापरून शिकते.
+
+'''
+
