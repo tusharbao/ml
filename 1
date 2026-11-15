@@ -1,0 +1,479 @@
+#feature transformation
+
+
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+df = pd.read_csv(r"C:\Users\Software Lab-12\Downloads\Wine.csv")
+
+print(df.keys())
+print(df.Customer_Segment.unique())
+print(df.isnull().sum())
+
+X = df.drop('Customer_Segment', axis=1)
+y = df['Customer_Segment']
+
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+pca = PCA()
+X_pca = pca.fit_transform(X)
+
+explained_variance_ratio = pca.explained_variance_ratio_
+
+plt.plot(
+    range(1, len(explained_variance_ratio) + 1),
+    explained_variance_ratio.cumsum(),
+    marker='o',
+    linestyle='--'
+)
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.title('Explained Variance Ratio')
+plt.show()
+
+n_components = 12
+pca = PCA(n_components=n_components)
+X_pca = pca.fit_transform(X)
+
+red_indices = y[y == 1].index
+white_indices = y[y == 2].index
+
+plt.scatter(
+    X_pca[red_indices, 0],
+    X_pca[red_indices, 1],
+    c='red',
+    label='Red Wine'
+)
+plt.scatter(
+    X_pca[white_indices, 0],
+    X_pca[white_indices, 1],
+    c='blue',
+    label='White Wine'
+)
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend()
+plt.title('PCA: Red Wine vs. White Wine')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+
+# Pandas library import करतो, जी dataset read आणि data manipulation करण्यासाठी वापरली जाते.
+import pandas as pd
+
+# PCA class import करतो, जी dimensionality reduction करण्यासाठी वापरली जाते.
+from sklearn.decomposition import PCA
+
+# StandardScaler import करतो, जो data ला standard scale वर convert करतो.
+from sklearn.preprocessing import StandardScaler
+
+# Matplotlib library import करतो, जी graphs आणि plots तयार करण्यासाठी वापरली जाते.
+import matplotlib.pyplot as plt
+
+
+# Wine.csv ही dataset CSV file मधून read करून df मध्ये store करतो.
+df = pd.read_csv(r"C:\Users\Software Lab-12\Downloads\Wine.csv")
+
+
+# Dataset मधील सर्व column names print करतो.
+print(df.keys())
+
+# Customer_Segment column मधील unique values म्हणजे वेगवेगळे classes print करतो.
+print(df.Customer_Segment.unique())
+
+# Dataset मधील प्रत्येक column मध्ये किती missing values आहेत ते check करतो.
+print(df.isnull().sum())
+
+
+# Customer_Segment हा target column सोडून बाकी सर्व columns X मध्ये store करतो.
+X = df.drop('Customer_Segment', axis=1)
+
+# Customer_Segment हा target column y मध्ये store करतो.
+y = df['Customer_Segment']
+
+
+# StandardScaler चे object तयार करतो.
+sc = StandardScaler()
+
+# सर्व features standardize करतो.
+# म्हणजे data ची mean 0 आणि standard deviation 1 होते.
+X = sc.fit_transform(X)
+
+
+# PCA चे object तयार करतो.
+# येथे सुरुवातीला सर्व possible principal components calculate होतील.
+pca = PCA()
+
+# PCA algorithm apply करून original data चे reduced components मध्ये transformation करतो.
+X_pca = pca.fit_transform(X)
+
+
+# प्रत्येक principal component किती variance explain करतो ते calculate करतो.
+explained_variance_ratio = pca.explained_variance_ratio_
+
+
+# Cumulative explained variance चा graph plot करतो.
+plt.plot(
+
+    # X-axis वर principal components ची संख्या दाखवतो.
+    range(1, len(explained_variance_ratio) + 1),
+
+    # प्रत्येक component चे explained variance add करून cumulative variance calculate करतो.
+    explained_variance_ratio.cumsum(),
+
+    # प्रत्येक data point वर circle marker दाखवतो.
+    marker='o',
+
+    # Graph मध्ये dashed line दाखवतो.
+    linestyle='--'
+)
+
+# X-axis ला label देतो.
+plt.xlabel('Number of Principal Components')
+
+# Y-axis ला label देतो.
+plt.ylabel('Cumulative Explained Variance')
+
+# Graph ला title देतो.
+plt.title('Explained Variance Ratio')
+
+# तयार केलेला graph screen वर display करतो.
+plt.show()
+
+
+# PCA साठी 12 principal components select करतो.
+n_components = 12
+
+# 12 components असणारा PCA object तयार करतो.
+pca = PCA(n_components=n_components)
+
+# PCA पुन्हा apply करून data चे 12 dimensions मध्ये conversion करतो.
+X_pca = pca.fit_transform(X)
+
+
+# Red Wine म्हणजे class 1 असणाऱ्या rows चे index मिळवतो.
+red_indices = y[y == 1].index
+
+# White Wine म्हणजे class 2 असणाऱ्या rows चे index मिळवतो.
+white_indices = y[y == 2].index
+
+
+# Red Wine चा scatter plot तयार करतो.
+plt.scatter(
+
+    # X_pca मधील पहिला principal component X-axis वर दाखवतो.
+    X_pca[red_indices, 0],
+
+    # X_pca मधील दुसरा principal component Y-axis वर दाखवतो.
+    X_pca[red_indices, 1],
+
+    # Red Wine साठी red colour वापरतो.
+    c='red',
+
+    # Graph मध्ये Red Wine हे label दाखवतो.
+    label='Red Wine'
+)
+
+# White Wine चा scatter plot तयार करतो.
+plt.scatter(
+
+    # White Wine चा पहिला principal component X-axis वर दाखवतो.
+    X_pca[white_indices, 0],
+
+    # White Wine चा दुसरा principal component Y-axis वर दाखवतो.
+    X_pca[white_indices, 1],
+
+    # White Wine साठी blue colour वापरतो.
+    c='blue',
+
+    # Graph मध्ये White Wine हे label दाखवतो.
+    label='White Wine'
+)
+
+# X-axis ला Principal Component 1 हे नाव देतो.
+plt.xlabel('Principal Component 1')
+
+# Y-axis ला Principal Component 2 हे नाव देतो.
+plt.ylabel('Principal Component 2')
+
+# Graph मध्ये Red Wine आणि White Wine ची legend दाखवतो.
+plt.legend()
+
+# Graph ला title देतो.
+plt.title('PCA: Red Wine vs. White Wine')
+
+# Final scatter plot display करतो.
+plt.show()
+
+
+
+
+
+
+
+
+Q1. What is PCA?
+
+Answer in English:
+PCA stands for Principal Component Analysis. It is a dimensionality reduction technique used to reduce the number of features while preserving important information.
+
+Answer in Marathi + English Mix:
+PCA म्हणजे Principal Component Analysis. ही dimensionality reduction technique आहे, जी important information preserve करून features ची संख्या कमी करते.
+
+Q2. What is the main purpose of PCA?
+
+Answer in English:
+The main purpose of PCA is to reduce data dimensions, remove unnecessary information, and make data easier to analyze and visualize.
+
+Answer in Marathi + English Mix:
+PCA चा main purpose म्हणजे data चे dimensions कमी करणे, unnecessary information कमी करणे आणि data analysis व visualization सोपे करणे.
+
+Q3. Which library is used for data manipulation in this practical?
+
+Answer in English:
+Pandas is used for data manipulation and reading CSV files.
+
+Answer in Marathi + English Mix:
+Pandas library data manipulation आणि CSV files read करण्यासाठी वापरली जाते.
+
+Q4. What is a CSV file?
+
+Answer in English:
+CSV stands for Comma Separated Values. It is a file format used to store tabular data.
+
+Answer in Marathi + English Mix:
+CSV म्हणजे Comma Separated Values. हा tabular data rows आणि columns मध्ये store करण्यासाठी वापरला जाणारा file format आहे.
+
+Q5. What is the use of StandardScaler?
+
+Answer in English:
+StandardScaler standardizes data by making its mean 0 and standard deviation 1.
+
+Answer in Marathi + English Mix:
+StandardScaler data standardize करतो. यामध्ये प्रत्येक feature ची mean 0 आणि standard deviation 1 होते.
+
+Q6. Why is feature scaling required before PCA?
+
+Answer in English:
+Feature scaling is required because PCA is affected by feature variances. Scaling prevents features with larger values from dominating the results.
+
+Answer in Marathi + English Mix:
+PCA हा variance वर depend असतो. त्यामुळे मोठ्या values असणारे features result वर जास्त प्रभाव टाकू नयेत म्हणून feature scaling करतो.
+
+Q7. What is dimensionality reduction?
+
+Answer in English:
+Dimensionality reduction is the process of reducing the number of input features while keeping important information.
+
+Answer in Marathi + English Mix:
+Dimensionality reduction म्हणजे important information maintain करून input features ची संख्या कमी करण्याची process.
+
+Q8. What is a Principal Component?
+
+Answer in English:
+A principal component is a new variable created by combining the original features. It represents maximum possible variance in the data.
+
+Answer in Marathi + English Mix:
+Principal Component म्हणजे original features combine करून तयार केलेला नवीन variable. तो data मधील maximum possible variance represent करतो.
+
+Q9. What is the use of fit_transform()?
+
+Answer in English:
+fit_transform() learns the required parameters from the data and then transforms the data.
+
+Answer in Marathi + English Mix:
+fit_transform() आधी data मधून required parameters शिकतो आणि नंतर data transform करतो.
+
+Q10. What is explained_variance_ratio_?
+
+Answer in English:
+It tells how much percentage of total variance is explained by each principal component.
+
+Answer in Marathi + English Mix:
+explained_variance_ratio_ प्रत्येक principal component data मधील किती variance explain करतो हे सांगतो.
+
+Q11. What is cumulative explained variance?
+
+Answer in English:
+Cumulative explained variance is the total explained variance obtained by adding the variance of principal components one by one.
+
+Answer in Marathi + English Mix:
+Cumulative explained variance म्हणजे प्रत्येक principal component चा explained variance एकत्र add करून मिळणारी total variance.
+
+Q12. What is the use of cumsum() function?
+
+Answer in English:
+cumsum() calculates the cumulative sum of array elements.
+
+Answer in Marathi + English Mix:
+cumsum() function प्रत्येक element ची previous elements सोबत बेरीज करून cumulative sum calculate करतो.
+
+Q13. Why do we use PCA(n_components=12)?
+
+Answer in English:
+It selects 12 principal components from the original dataset and reduces the data to 12 dimensions.
+
+Answer in Marathi + English Mix:
+PCA(n_components=12) original dataset मधून 12 principal components select करतो आणि data चे dimensions 12 करतो.
+
+Q14. What is the difference between X and y in this practical?
+
+Answer in English:
+X contains input features, while y contains the target or output variable.
+
+Answer in Marathi + English Mix:
+X मध्ये input features असतात, तर y मध्ये target किंवा output variable असतो. या practical मध्ये Customer_Segment हा target आहे.
+
+Q15. What is the use of drop() function?
+
+Answer in English:
+The drop() function is used to remove a specified row or column from a DataFrame.
+
+Answer in Marathi + English Mix:
+drop() function वापरून DataFrame मधील specific row किंवा column remove करता येतो. येथे Customer_Segment column remove केला आहे.
+
+Q16. What is the use of isnull().sum()?
+
+Answer in English:
+It checks and counts missing or null values in each column of the dataset.
+
+Answer in Marathi + English Mix:
+isnull().sum() प्रत्येक column मधील किती missing किंवा null values आहेत ते count करतो.
+
+Q17. What is a Scatter Plot?
+
+Answer in English:
+A scatter plot is a graph that represents data points using dots to show the relationship between two variables.
+
+Answer in Marathi + English Mix:
+Scatter Plot हा graph आहे ज्यामध्ये dots च्या मदतीने दोन variables मधील relationship दाखवला जातो.
+
+Q18. Why do we use two principal components in the scatter plot?
+
+Answer in English:
+We use two principal components because a 2D graph requires two axes, X-axis and Y-axis, to visualize the data.
+
+Answer in Marathi + English Mix:
+2D graph मध्ये X-axis आणि Y-axis असे दोन axes असतात. म्हणून data visualize करण्यासाठी दोन principal components वापरतो.
+
+Q19. Which library is used to plot graphs?
+
+Answer in English:
+Matplotlib is used to create graphs and visualizations in Python.
+
+Answer in Marathi + English Mix:
+Matplotlib Python मध्ये graphs आणि visualizations तयार करण्यासाठी वापरली जाते.
+
+Q20. What is the difference between Red Wine and White Wine in this practical?
+
+Answer in English:
+Red Wine and White Wine are two different classes represented by different colours in the scatter plot. Red is represented by red colour and White by blue colour.
+
+Answer in Marathi + English Mix:
+या practical मध्ये Red Wine आणि White Wine हे दोन different classes आहेत. Scatter plot मध्ये Red Wine red colour ने आणि White Wine blue colour ने represent केले आहे.
+
+General Machine Learning Viva Questions (21–30)
+Q21. What is Machine Learning?
+
+Answer in English:
+Machine Learning is a branch of Artificial Intelligence that allows computers to learn from data and make predictions without being explicitly programmed.
+
+Answer in Marathi + English Mix:
+Machine Learning हा Artificial Intelligence चा part आहे. यामध्ये computer data मधून शिकतो आणि explicitly program न करता predictions करतो.
+
+Q22. What are the types of Machine Learning?
+
+Answer in English:
+There are three main types: Supervised Learning, Unsupervised Learning, and Reinforcement Learning.
+
+Answer in Marathi + English Mix:
+Machine Learning चे तीन main types आहेत: Supervised Learning, Unsupervised Learning आणि Reinforcement Learning.
+
+Q23. What is Supervised Learning?
+
+Answer in English:
+Supervised Learning is a type of Machine Learning where the model learns from labelled data.
+
+Answer in Marathi + English Mix:
+Supervised Learning मध्ये model labelled data वापरून train होतो. म्हणजे input सोबत correct output दिलेला असतो.
+
+Q24. What is Unsupervised Learning?
+
+Answer in English:
+Unsupervised Learning is a type of Machine Learning where the model learns patterns from data without labelled outputs.
+
+Answer in Marathi + English Mix:
+Unsupervised Learning मध्ये model ला labelled output दिलेला नसतो. तो स्वतः data मधील patterns शोधतो.
+
+Q25. What is Reinforcement Learning?
+
+Answer in English:
+Reinforcement Learning is a type of Machine Learning where an agent learns by interacting with an environment using rewards and penalties.
+
+Answer in Marathi + English Mix:
+Reinforcement Learning मध्ये agent environment सोबत interact करून शिकतो. चांगल्या action साठी reward आणि चुकीच्या action साठी penalty मिळते.
+
+Q26. What is Classification?
+
+Answer in English:
+Classification is a supervised learning technique used to predict categories or class labels.
+
+Answer in Marathi + English Mix:
+Classification ही supervised learning technique आहे. यामध्ये data कोणत्या category किंवा class मध्ये येतो हे predict केले जाते.
+
+Q27. What is Regression?
+
+Answer in English:
+Regression is a supervised learning technique used to predict continuous numerical values.
+
+Answer in Marathi + English Mix:
+Regression ही supervised learning technique आहे. यामध्ये continuous numerical values predict केल्या जातात.
+
+Q28. What is Overfitting?
+
+Answer in English:
+Overfitting occurs when a model learns the training data too well, including noise, and performs poorly on new data.
+
+Answer in Marathi + English Mix:
+Overfitting तेव्हा होते जेव्हा model training data खूप जास्त शिकतो, अगदी noise सुद्धा. त्यामुळे new data वर त्याची performance खराब होते.
+
+Q29. What is Underfitting?
+
+Answer in English:
+Underfitting occurs when a model cannot learn the important patterns from the training data and performs poorly.
+
+Answer in Marathi + English Mix:
+Underfitting तेव्हा होते जेव्हा model training data मधील important patterns शिकू शकत नाही आणि त्याची performance खराब होते.
+
+Q30. What is the difference between Training Data and Testing Data?
+
+Answer in English:
+- Training Data is used to train the Machine Learning model.
+- Testing Data is used to evaluate the model's performance on unseen data.
+Answer in Marathi + English Mix:
+- Training Data model ला train करण्यासाठी वापरला जातो.
+- Testing Data नवीन किंवा unseen data वर model ची performance check करण्यासाठी वापरला जातो.
+
+
+'''
