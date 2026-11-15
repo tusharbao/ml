@@ -1,0 +1,63 @@
+pip install pandas numpy matplotlib scikit-learn
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Read dataset
+df = pd.read_csv("Wine dataset.csv")
+
+print(df.keys())
+print(df["class"].unique())
+print(df.isnull().sum())
+
+# Separate input and output
+X = df.drop("class", axis=1)
+y = df["class"]
+
+# Standardization
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+# Apply PCA
+pca = PCA()
+X_pca = pca.fit_transform(X)
+
+# Explained variance ratio
+explained_variance_ratio = pca.explained_variance_ratio_
+
+plt.plot(
+    range(1, len(explained_variance_ratio) + 1),
+    explained_variance_ratio.cumsum(),
+    marker="o",
+    linestyle="--"
+)
+
+plt.xlabel("Number of Principal Components")
+plt.ylabel("Cumulative Explained Variance")
+plt.title("Explained Variance Ratio")
+plt.grid()
+plt.show()
+
+# Select number of components
+n_components = 12
+
+pca = PCA(n_components=n_components)
+X_pca = pca.fit_transform(X)
+
+# Plot three wine classes
+for wine_class in sorted(y.unique()):
+    indices = y == wine_class
+
+    plt.scatter(
+        X_pca[indices, 0],
+        X_pca[indices, 1],
+        label=f"Wine Class {wine_class}"
+    )
+
+plt.xlabel("Principal Component 1")
+plt.ylabel("Principal Component 2")
+plt.legend()
+plt.title("PCA: Wine Dataset")
+plt.grid()
+plt.show()

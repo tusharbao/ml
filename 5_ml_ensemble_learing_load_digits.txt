@@ -1,0 +1,49 @@
+pip install numpy pandas matplotlib seaborn scikit-learn
+# 1. Import libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sn
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
+
+# 2. Load dataset
+digits = load_digits()
+
+# 3. Create DataFrame
+df = pd.DataFrame(digits.data)
+df['target'] = digits.target
+
+# 4. Display sample images
+plt.gray()
+for i in range(4):
+    plt.matshow(digits.images[i])
+plt.show()
+
+# 5. Separate features and target
+X = df.drop('target', axis=1)
+y = df['target']
+
+# 6. Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 7. Apply Random Forest
+model = RandomForestClassifier(n_estimators=20, random_state=42)
+model.fit(X_train, y_train)
+
+# 8. Predict and calculate accuracy
+y_predicted = model.predict(X_test)
+print("Accuracy:", model.score(X_test, y_test))
+
+# 9. Confusion Matrix
+cm = confusion_matrix(y_test, y_predicted)
+
+plt.figure(figsize=(10, 7))
+sn.heatmap(cm, annot=True, fmt='d')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()

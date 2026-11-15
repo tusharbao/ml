@@ -1,0 +1,52 @@
+pip install numpy scikit-learn matplotlib
+# Import required libraries
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+
+# 1. Load dataset
+digits = load_digits()
+
+# 2. Input and output
+X = digits.data
+y = digits.target
+
+# 3. Display sample image
+plt.imshow(digits.images[0], cmap='gray')
+plt.title("Digit: " + str(y[0]))
+plt.show()
+
+# 4. Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# 5. Create SVM model
+model = SVC(kernel='rbf')
+
+# 6. Train model
+model.fit(X_train, y_train)
+
+# 7. Prediction
+y_pred = model.predict(X_test)
+
+# 8. Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+# 9. Classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# 10. Display predictions
+for i in range(5):
+    plt.imshow(X_test[i].reshape(8, 8), cmap='gray')
+    plt.title("Actual: {} Predicted: {}".format(
+        y_test[i], y_pred[i]
+    ))
+    plt.show()

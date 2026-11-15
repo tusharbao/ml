@@ -1,0 +1,142 @@
+pip install pandas numpy matplotlib scikit-learn
+# 1. Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+
+# 2. Load dataset
+df = pd.read_csv("Iris.csv")
+
+# 3. Explore dataset
+print(df.head())
+print(df.tail())
+print("Length:", len(df))
+print("Shape:", df.shape)
+print("Columns:", df.columns)
+
+for i, col in enumerate(df.columns):
+    print(f"Column number {i+1} is {col}")
+
+print(df.dtypes)
+df.info()
+print(df.describe())
+
+# 4. Check missing values
+print(df.isnull().sum())
+
+# 5. Remove unnecessary Id column
+df.drop('Id', axis=1, inplace=True)
+
+# 6. Check species count
+print(df['Species'].value_counts())
+
+# 7. Separate target and clustering data
+target_data = df['Species']
+clustering_data = df.iloc[:, 0:4]
+
+print(clustering_data.head())
+
+# 8. Visualize Sepal Length and Width
+plt.figure(figsize=(10, 6))
+
+sns.scatterplot(
+    x=df['SepalLengthCm'],
+    y=df['SepalWidthCm'],
+    s=70,
+    color='red'
+)
+
+plt.xlabel('Sepal Length (in cm)')
+plt.ylabel('Sepal Width (in cm)')
+plt.title('Sepal Length vs Width')
+plt.show()
+
+# 9. Elbow Method
+wcss = []
+
+for i in range(1, 11):
+    km = KMeans(
+        n_clusters=i,
+        init='k-means++',
+        random_state=42,
+        n_init=10
+    )
+
+    km.fit(clustering_data)
+    wcss.append(km.inertia_)
+
+print("WCSS Values:")
+print(np.array(wcss))
+
+# 10. Plot Elbow graph
+plt.figure(figsize=(10, 6))
+
+plt.plot(
+    range(1, 11),
+    wcss,
+    linewidth=2,
+    color='red',
+    marker='o'
+)
+
+plt.axvline(x=3, linestyle='--')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('WCSS')
+plt.title('The Elbow Method')
+plt.grid()
+plt.show()
+
+# 11. Apply K-Means with 3 clusters
+kms = KMeans(
+    n_clusters=3,
+    init='k-means++',
+    random_state=42,
+    n_init=10
+)
+
+kms.fit(clustering_data)
+
+# 12. Predict clusters
+clusters = clustering_data.copy()
+clusters['Cluster_Prediction'] = kms.predict(clustering_data)
+
+print("\nCluster Results:")
+print(clusters.head())
+
+# 13. Display cluster centers
+print("\nCluster Centers:")
+print(kms.cluster_centers_)
+
+# 14. Visualize final clusters
+plt.figure(figsize=(10, 6))
+
+for i in range(3):
+    plt.scatter(
+        clusters[clusters['Cluster_Prediction'] == i]['SepalLengthCm'],
+        clusters[clusters['Cluster_Prediction'] == i]['SepalWidthCm'],
+        s=70,
+        label=f'Cluster {i}'
+    )
+
+# Display centroids
+plt.scatter(
+    kms.cluster_centers_[:, 0],
+    kms.cluster_centers_[:, 1],
+    s=170,
+    c='yellow',
+    edgecolor='black',
+    label='Centroids'
+)
+
+plt.legend()
+plt.xlabel('Sepal Length (in cm)')
+plt.ylabel('Sepal Width (in cm)')
+plt.title('K-Means Clustering on Iris Dataset')
+plt.xlim(4, 8)
+plt.ylim(1.8, 4.5)
+plt.grid()
+plt.show()
+
+

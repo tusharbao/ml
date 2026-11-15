@@ -1,0 +1,206 @@
+pip install pandas numpy matplotlib seaborn scikit-learn
+# 1. Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.pipeline import make_pipeline
+
+# 2. Load Uber dataset
+df = pd.read_csv("uber.csv")
+
+print("First five records:")
+print(df.head())
+
+print("\nDataset Information:")
+print(df.info())
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# 3. Data preprocessing
+# Remove duplicate records
+df = df.drop_duplicates()
+
+# Remove missing values
+df = df.dropna()
+
+# Convert pickup_datetime into datetime format
+df["pickup_datetime"] = pd.to_datetime(
+    df["pickup_datetime"], errors="coerce", utc=True
+)
+
+df = df.dropna(subset=["pickup_datetime"])
+
+# Remove invalid fare and passenger values
+df = df[
+    (df["fare_amount"] > 0) &
+    (df["passenger_count"] > 0) &
+    (df["passenger_count"] <= 6)
+]
+
+# Validate pickup and drop-off coordinates
+df = df[
+    df["pickup_latitude"].between(-90, 90) &
+    df["dropoff_latitude"].between(-90, 90) &
+    df["pickup_longitude"].between(-180, 180) &
+    df["dropoff_longitude"].between(-180, 180)
+]
+
+# Remove zero coordinates
+df = df[
+    (df["pickup_latitude"] != 0) &
+    (df["pickup_longitude"] != 0) &
+    (df["dropoff_latitude"] != 0) &
+    (df["dropoff_longitude"] != 0)
+]
+
+# 4. Calculate distance using Haversine formula
+def calculate_distance(lat1, lon1, lat2, lon2):
+    R = 6371
+
+    lat1 = np.radians(lat1)
+    lon1 = np.radians(lon1)
+    lat2 = np.radians(lat2)
+    lon2 = np.radians(lon2)
+
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = (np.sin(dlat / 2) ** 2 +
+         np.cos(lat1) * np.cos(lat2) *
+         np.sin(dlon / 2) ** 2)
+
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    return R * c
+
+df["distance_km"] = calculate_distance(
+    df["pickup_latitude"],
+    df["pickup_longitude"],
+    df["dropoff_latitude"],
+    df["dropoff_longitude"]
+)
+
+# Remove zero-distance rides
+df = df[df["distance_km"] > 0]
+
+# 5. Identify and remove fare outliers using IQR
+Q1 = df["fare_amount"].quantile(0.25)
+Q3 = df["fare_amount"].quantile(0.75)
+
+IQR = Q3 - Q1
+
+lower_limit = Q1 - 1.5 * IQR
+upper_limit = Q3 + 1.5 * IQR
+
+print("\nLower Limit:", lower_limit)
+print("Upper Limit:", upper_limit)
+
+# Display outliers
+outliers = df[
+    (df["fare_amount"] < lower_limit) |
+    (df["fare_amount"] > upper_limit)
+]
+
+print("Number of Outliers:", len(outliers))
+
+# Remove outliers
+df = df[
+    (df["fare_amount"] >= lower_limit) &
+    (df["fare_amount"] <= upper_limit)
+]
+
+# 6. Extract date and time features
+df["hour"] = df["pickup_datetime"].dt.hour
+df["day"] = df["pickup_datetime"].dt.day
+df["month"] = df["pickup_datetime"].dt.month
+df["year"] = df["pickup_datetime"].dt.year
+df["day_of_week"] = df["pickup_datetime"].dt.dayofweek
+
+# 7. Select input and output variables
+X = df[
+    ["distance_km", "passenger_count",
+     "hour", "day", "month", "year", "day_of_week"]
+]
+
+y = df["fare_amount"]
+
+# 8. Check correlation
+correlation = df[
+    ["fare_amount", "distance_km", "passenger_count",
+     "hour", "day", "month", "year", "day_of_week"]
+].corr()
+
+print("\nCorrelation Matrix:")
+print(correlation)
+
+plt.figure(figsize=(10, 7))
+sns.heatmap(correlation, annot=True, cmap="coolwarm", fmt=".2f")
+plt.title("Uber Dataset Correlation Matrix")
+plt.show()
+
+# 9. Split dataset into training and testing data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 10. Implement regression models
+models = {
+    "Linear Regression": make_pipeline(
+        StandardScaler(), LinearRegression()
+    ),
+
+    "Ridge Regression": make_pipeline(
+        StandardScaler(), Ridge(alpha=1.0)
+    ),
+
+    "Lasso Regression": make_pipeline(
+        StandardScaler(), Lasso(alpha=0.01, max_iter=10000)
+    )
+}
+
+# 11. Train and evaluate models
+results = []
+
+for name, model in models.items():
+
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+
+    results.append([name, r2, rmse, mae])
+
+    print("\n", name)
+    print("R2 Score:", round(r2, 4))
+    print("RMSE:", round(rmse, 4))
+    print("MAE:", round(mae, 4))
+
+# 12. Compare all models
+results_df = pd.DataFrame(
+    results,
+    columns=["Model", "R2 Score", "RMSE", "MAE"]
+)
+
+print("\nModel Comparison:")
+print(results_df)
+
+# 13. Visualize model comparison
+results_df.set_index("Model")[["R2 Score"]].plot(
+    kind="bar", figsize=(8, 5), legend=False
+)
+
+plt.title("Comparison of Regression Models - R2 Score")
+plt.ylabel("R2 Score")
+plt.xticks(rotation=15)
+plt.tight_layout()
+plt.show()
